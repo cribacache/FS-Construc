@@ -1,0 +1,253 @@
+{% extends "website/base.html" %}
+{% load static %}
+
+{% block content %}
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="#inicio" class="logo">
+      <span class="logo-mark">FS</span>
+      <span class="logo-text">CONSTRUCCIONES<small>SPA</small></span>
+    </a>
+    <nav class="main-nav">
+      <a href="#servicios">Servicios</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#proceso">Proceso</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <a href="tel:+56930689483" class="btn btn-outline header-cta">+56 9 3068 9483</a>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section id="inicio" class="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="container hero-inner">
+      <p class="eyebrow">Diseño &amp; Construcción a medida</p>
+      <h1>Transformamos tus espacios<br>con precisión y estilo</h1>
+      <p class="hero-lead">
+        Especialistas en diseño, construcción, remodelaciones interiores y exteriores,
+        cocinas y muebles personalizados, pérgolas, pintura y pavimentos. Calidad y
+        durabilidad con materiales de primera y técnicas avanzadas.
+      </p>
+      <div class="hero-actions">
+        <a href="#contacto" class="btn btn-primary">Solicita tu cotización</a>
+        <a href="#servicios" class="btn btn-ghost">Ver servicios</a>
+      </div>
+    </div>
+    <div class="hero-pills container">
+      <a href="mailto:fsconstrucciones7@gmail.com" class="pill">
+        <span class="pill-icon">{% include "website/icons/mail.svg" %}</span>
+        fsconstrucciones7@gmail.com
+      </a>
+      <a href="tel:+56930689483" class="pill">
+        <span class="pill-icon">{% include "website/icons/phone.svg" %}</span>
+        +56 9 3068 9483
+      </a>
+      <a href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener" class="pill">
+        <span class="pill-icon">{% include "website/icons/instagram.svg" %}</span>
+        @fdsconstrucciones
+      </a>
+    </div>
+  </section>
+
+  <!-- SERVICIOS -->
+  <section id="servicios" class="section">
+    <div class="container">
+      <p class="section-eyebrow">Lo que hacemos</p>
+      <h2 class="section-title">Nuestros servicios</h2>
+      <p class="section-lead">
+        Adaptamos cada proyecto a tus necesidades, con altos estándares de calidad,
+        seguridad y funcionalidad.
+      </p>
+
+      <div class="services-grid">
+        {% for service in services %}
+        <article class="service-card">
+          <div class="service-icon">{% include service.icon %}</div>
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- NOSOTROS / VALORES -->
+  <section id="nosotros" class="section section-dark">
+    <div class="container">
+      <p class="section-eyebrow section-eyebrow-light">Por qué elegirnos</p>
+      <h2 class="section-title section-title-light">Compromiso en cada detalle</h2>
+      <p class="section-lead section-lead-light">
+        Más de un proyecto realizado con dedicación: transformamos ideas en espacios
+        funcionales, duraderos y con terminaciones de primer nivel.
+      </p>
+
+      <div class="values-grid">
+        <div class="value-card">
+          <div class="value-icon">{% include "website/icons/shield.svg" %}</div>
+          <h3>Garantía</h3>
+          <p>Respaldamos cada trabajo con materiales de calidad y mano de obra certificada.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-icon">{% include "website/icons/handshake.svg" %}</div>
+          <h3>Compromiso</h3>
+          <p>Cumplimos plazos y acuerdos, manteniéndote informado en cada etapa.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-icon">{% include "website/icons/badge.svg" %}</div>
+          <h3>Profesionalismo</h3>
+          <p>Equipo técnico especializado en diseño, construcción y remodelación.</p>
+        </div>
+        <div class="value-card">
+          <div class="value-icon">{% include "website/icons/target.svg" %}</div>
+          <h3>Dedicación</h3>
+          <p>Personalizamos cada proyecto según tus gustos y necesidades reales.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESO -->
+  <section id="proceso" class="section">
+    <div class="container">
+      <p class="section-eyebrow">Cómo trabajamos</p>
+      <h2 class="section-title">De la idea a la entrega</h2>
+
+      <div class="process-grid">
+        <div class="process-step">
+          <span class="process-number">01</span>
+          <h3>Contacto</h3>
+          <p>Nos cuentas tu proyecto a través del formulario, correo o WhatsApp.</p>
+        </div>
+        <div class="process-step">
+          <span class="process-number">02</span>
+          <h3>Diseño y cotización</h3>
+          <p>Evaluamos el espacio y te entregamos una propuesta a medida.</p>
+        </div>
+        <div class="process-step">
+          <span class="process-number">03</span>
+          <h3>Construcción</h3>
+          <p>Ejecutamos con materiales de primera y técnicas avanzadas.</p>
+        </div>
+        <div class="process-step">
+          <span class="process-number">04</span>
+          <h3>Entrega</h3>
+          <p>Revisamos contigo cada detalle antes de la entrega final.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACTO -->
+  <section id="contacto" class="section section-dark">
+    <div class="container contact-grid">
+      <div class="contact-info">
+        <p class="section-eyebrow section-eyebrow-light">Hablemos</p>
+        <h2 class="section-title section-title-light">Contáctanos</h2>
+        <p class="section-lead section-lead-light">
+          Cuéntanos qué necesitas y te responderemos a la brevedad.
+        </p>
+
+        <ul class="contact-list">
+          <li>
+            <span class="contact-icon">{% include "website/icons/phone.svg" %}</span>
+            <div>
+              <strong>Teléfono</strong>
+              <a href="tel:+56930689483">+56 9 3068 9483</a> /
+              <a href="tel:+56964989608">+56 9 6498 9608</a>
+            </div>
+          </li>
+          <li>
+            <span class="contact-icon">{% include "website/icons/mail.svg" %}</span>
+            <div>
+              <strong>Correo</strong>
+              <a href="mailto:fsconstrucciones7@gmail.com">fsconstrucciones7@gmail.com</a>
+            </div>
+          </li>
+          <li>
+            <span class="contact-icon">{% include "website/icons/instagram.svg" %}</span>
+            <div>
+              <strong>Instagram</strong>
+              <a href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener">@fdsconstrucciones</a>
+            </div>
+          </li>
+        </ul>
+
+        <div class="social-buttons">
+          <a class="social-btn" href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener" aria-label="Instagram">
+            {% include "website/icons/instagram.svg" %}
+          </a>
+          <a class="social-btn" href="https://wa.me/56930689483" target="_blank" rel="noopener" aria-label="WhatsApp">
+            {% include "website/icons/whatsapp.svg" %}
+          </a>
+          <a class="social-btn" href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook">
+            {% include "website/icons/facebook.svg" %}
+          </a>
+          <a class="social-btn" href="mailto:fsconstrucciones7@gmail.com" aria-label="Correo">
+            {% include "website/icons/mail.svg" %}
+          </a>
+        </div>
+      </div>
+
+      <div class="contact-form-wrap">
+        {% if messages %}
+          {% for message in messages %}
+            <p class="form-alert">{{ message }}</p>
+          {% endfor %}
+        {% endif %}
+        <form method="post" novalidate class="contact-form">
+          {% csrf_token %}
+          <div class="form-row">
+            <label for="{{ form.name.id_for_label }}">Nombre</label>
+            {{ form.name }}
+            {{ form.name.errors }}
+          </div>
+          <div class="form-row form-row-split">
+            <div>
+              <label for="{{ form.email.id_for_label }}">Correo electrónico</label>
+              {{ form.email }}
+              {{ form.email.errors }}
+            </div>
+            <div>
+              <label for="{{ form.phone.id_for_label }}">Teléfono</label>
+              {{ form.phone }}
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="{{ form.service.id_for_label }}">Servicio de interés</label>
+            {{ form.service }}
+          </div>
+          <div class="form-row">
+            <label for="{{ form.message.id_for_label }}">Mensaje</label>
+            {{ form.message }}
+            {{ form.message.errors }}
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Enviar mensaje</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark">FS</span>
+      <span class="logo-text">CONSTRUCCIONES<small>SPA</small></span>
+    </div>
+    <p>&copy; {% now "Y" %} FS Construcciones SPA. Todos los derechos reservados.</p>
+    <div class="social-buttons social-buttons-sm">
+      <a class="social-btn" href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener" aria-label="Instagram">
+        {% include "website/icons/instagram.svg" %}
+      </a>
+      <a class="social-btn" href="https://wa.me/56930689483" target="_blank" rel="noopener" aria-label="WhatsApp">
+        {% include "website/icons/whatsapp.svg" %}
+      </a>
+      <a class="social-btn" href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook">
+        {% include "website/icons/facebook.svg" %}
+      </a>
+    </div>
+  </div>
+</footer>
+{% endblock %}
