@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -22,10 +23,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-64qa*@h+cwqy_u1jlte7tt2(bp@72g2t=va=j#mm*aadzwq*&g'
 
+# URL path for the admin site. Not linked from anywhere in the site, so it's
+# only reachable by typing it directly. Override with the DJANGO_ADMIN_URL
+# env var in production instead of hardcoding a secret path in source control.
+ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'panel-fs-9f21c7/')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()
+]
 
 
 # Application definition

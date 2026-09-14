@@ -56,6 +56,29 @@ SERVICES = [
     },
 ]
 
+GALLERY_CATEGORIES = [
+    {"slug": "fachadas", "label": "Fachadas y Exteriores"},
+    {"slug": "salas-tv", "label": "Salas de TV"},
+    {"slug": "quinchos", "label": "Quinchos y Cocinas Exteriores"},
+    {"slug": "estructuras", "label": "Estructuras y Carpintería"},
+    {"slug": "pavimentos", "label": "Pavimentos"},
+]
+
+GALLERY = [
+    {"image": "fachadas-1", "category": "fachadas", "label": "Fachadas y Exteriores"},
+    {"image": "fachadas-2", "category": "fachadas", "label": "Fachadas y Exteriores"},
+    {"image": "fachadas-3", "category": "fachadas", "label": "Fachadas y Exteriores"},
+    {"image": "salas-tv-1", "category": "salas-tv", "label": "Salas de TV"},
+    {"image": "salas-tv-2", "category": "salas-tv", "label": "Salas de TV"},
+    {"image": "quinchos-1", "category": "quinchos", "label": "Quinchos y Cocinas Exteriores"},
+    {"image": "quinchos-2", "category": "quinchos", "label": "Quinchos y Cocinas Exteriores"},
+    {"image": "estructuras-1", "category": "estructuras", "label": "Estructuras y Carpintería"},
+    {"image": "estructuras-2", "category": "estructuras", "label": "Estructuras y Carpintería"},
+    {"image": "estructuras-3", "category": "estructuras", "label": "Estructuras y Carpintería"},
+    {"image": "pavimentos-1", "category": "pavimentos", "label": "Pavimentos"},
+    {"image": "pavimentos-2", "category": "pavimentos", "label": "Pavimentos"},
+]
+
 
 def home(request):
     if request.method == "POST":
@@ -70,4 +93,10 @@ def home(request):
     else:
         form = ContactForm()
 
-    return render(request, "website/home.html", {"form": form, "services": SERVICES})
+    context = {
+        "form": form,
+        "services": SERVICES,
+        "gallery": GALLERY,
+        "gallery_categories": GALLERY_CATEGORIES,
+    }
+    return render(request, "website/home.html", context)

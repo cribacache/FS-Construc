@@ -9,67 +9,43 @@
       <span class="logo-text">CONSTRUCCIONES<small>SPA</small></span>
     </a>
     <nav class="main-nav">
-      <a href="#servicios">Servicios</a>
       <a href="#nosotros">Nosotros</a>
-      <a href="#proceso">Proceso</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#portafolio">Portafolio</a>
       <a href="#contacto">Contacto</a>
     </nav>
-    <a href="tel:+56930689483" class="btn btn-outline header-cta">+56 9 3068 9483</a>
+    <a href="#contacto" class="btn btn-outline header-cta">Contáctanos</a>
   </div>
 </header>
 
 <main>
   <!-- HERO -->
-  <section id="inicio" class="hero">
-    <div class="hero-bg" aria-hidden="true"></div>
+  <section id="inicio" class="hero hero-center">
+    <div class="hero-bg" style="background-image:url('{% static "img/gallery/hero.jpg" %}')" aria-hidden="true"></div>
+    <div class="hero-overlay hero-overlay-center" aria-hidden="true"></div>
     <div class="container hero-inner">
       <p class="eyebrow">Diseño &amp; Construcción a medida</p>
-      <h1>Transformamos tus espacios<br>con precisión y estilo</h1>
+      <h1>Diseñamos, remodelamos,<br>construimos</h1>
       <p class="hero-lead">
         Especialistas en diseño, construcción, remodelaciones interiores y exteriores,
-        cocinas y muebles personalizados, pérgolas, pintura y pavimentos. Calidad y
-        durabilidad con materiales de primera y técnicas avanzadas.
+        cocinas y muebles personalizados, pérgolas, pintura y pavimentos.
       </p>
       <div class="hero-actions">
-        <a href="#contacto" class="btn btn-primary">Solicita tu cotización</a>
-        <a href="#servicios" class="btn btn-ghost">Ver servicios</a>
+        <a href="#contacto" class="btn btn-primary">Haz tu proyecto con nosotros</a>
       </div>
-    </div>
-    <div class="hero-pills container">
-      <a href="mailto:fsconstrucciones7@gmail.com" class="pill">
-        <span class="pill-icon">{% include "website/icons/mail.svg" %}</span>
-        fsconstrucciones7@gmail.com
-      </a>
-      <a href="tel:+56930689483" class="pill">
-        <span class="pill-icon">{% include "website/icons/phone.svg" %}</span>
-        +56 9 3068 9483
-      </a>
-      <a href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener" class="pill">
-        <span class="pill-icon">{% include "website/icons/instagram.svg" %}</span>
-        @fdsconstrucciones
-      </a>
     </div>
   </section>
 
-  <!-- SERVICIOS -->
-  <section id="servicios" class="section">
-    <div class="container">
-      <p class="section-eyebrow">Lo que hacemos</p>
-      <h2 class="section-title">Nuestros servicios</h2>
-      <p class="section-lead">
-        Adaptamos cada proyecto a tus necesidades, con altos estándares de calidad,
-        seguridad y funcionalidad.
+  <!-- INTRO / STATEMENT -->
+  <section class="section intro-section">
+    <div class="container intro-inner">
+      <h2 class="intro-title">Construimos y renovamos espacios pensados para durar.</h2>
+      <p class="intro-lead">
+        Nos dedicamos a conocer a fondo las necesidades y gustos de nuestros clientes
+        para entregarles un proyecto que combine funcionalidad, calidad y estilo, cuidando
+        cada detalle de principio a fin.
       </p>
-
-      <div class="services-grid">
-        {% for service in services %}
-        <article class="service-card">
-          <div class="service-icon">{% include service.icon %}</div>
-          <h3>{{ service.title }}</h3>
-          <p>{{ service.description }}</p>
-        </article>
-        {% endfor %}
-      </div>
+      <a href="#portafolio" class="btn btn-outline">Ver portafolio</a>
     </div>
   </section>
 
@@ -79,8 +55,8 @@
       <p class="section-eyebrow section-eyebrow-light">Por qué elegirnos</p>
       <h2 class="section-title section-title-light">Compromiso en cada detalle</h2>
       <p class="section-lead section-lead-light">
-        Más de un proyecto realizado con dedicación: transformamos ideas en espacios
-        funcionales, duraderos y con terminaciones de primer nivel.
+        Transformamos ideas en espacios funcionales, duraderos y con terminaciones de
+        primer nivel.
       </p>
 
       <div class="values-grid">
@@ -107,6 +83,62 @@
       </div>
     </div>
   </section>
+
+  <!-- SERVICIOS -->
+  <section id="servicios" class="section">
+    <div class="container">
+      <p class="section-eyebrow">Lo que hacemos</p>
+      <h2 class="section-title">Nuestros servicios</h2>
+      <p class="section-lead">
+        Adaptamos cada proyecto a tus necesidades, con altos estándares de calidad,
+        seguridad y funcionalidad.
+      </p>
+
+      <div class="services-grid">
+        {% for service in services %}
+        <article class="service-card">
+          <div class="service-icon">{% include service.icon %}</div>
+          <h3>{{ service.title }}</h3>
+          <p>{{ service.description }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- PORTAFOLIO -->
+  <section id="portafolio" class="section section-soft">
+    <div class="container">
+      <p class="section-eyebrow">Nuestro trabajo</p>
+      <h2 class="section-title">Portafolio de proyectos</h2>
+      <p class="section-lead">
+        Una muestra real de obras ejecutadas por FS Construcciones SPA.
+      </p>
+
+      <div class="gallery-filters">
+        <button type="button" class="gallery-filter is-active" data-filter="all">Todos</button>
+        {% for cat in gallery_categories %}
+        <button type="button" class="gallery-filter" data-filter="{{ cat.slug }}">{{ cat.label }}</button>
+        {% endfor %}
+      </div>
+
+      <div class="gallery-grid">
+        {% for item in gallery %}
+        <button type="button" class="gallery-item" data-category="{{ item.category }}" data-full="{% static 'img/gallery/'|add:item.image|add:'.jpg' %}">
+          <img src="{% static 'img/gallery/'|add:item.image|add:'.jpg' %}" alt="{{ item.label }}" loading="lazy">
+          <span class="gallery-item-label">{{ item.label }}</span>
+        </button>
+        {% endfor %}
+      </div>
+
+      <p class="gallery-footnote">Visita nuestro Instagram <a href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener">@fdsconstrucciones</a> para ver más proyectos realizados.</p>
+    </div>
+  </section>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Cerrar">&times;</button>
+    <img src="" alt="" id="lightboxImg">
+  </div>
 
   <!-- PROCESO -->
   <section id="proceso" class="section">
@@ -141,102 +173,107 @@
 
   <!-- CONTACTO -->
   <section id="contacto" class="section section-dark">
-    <div class="container contact-grid">
-      <div class="contact-info">
+    <div class="container">
+      <div class="contact-heading">
         <p class="section-eyebrow section-eyebrow-light">Hablemos</p>
-        <h2 class="section-title section-title-light">Contáctanos</h2>
-        <p class="section-lead section-lead-light">
+        <h2 class="section-title section-title-light">¡Empecemos a construir juntos!</h2>
+        <p class="section-lead section-lead-light contact-heading-lead">
           Cuéntanos qué necesitas y te responderemos a la brevedad.
         </p>
-
-        <ul class="contact-list">
-          <li>
-            <span class="contact-icon">{% include "website/icons/phone.svg" %}</span>
-            <div>
-              <strong>Teléfono</strong>
-              <a href="tel:+56930689483">+56 9 3068 9483</a> /
-              <a href="tel:+56964989608">+56 9 6498 9608</a>
-            </div>
-          </li>
-          <li>
-            <span class="contact-icon">{% include "website/icons/mail.svg" %}</span>
-            <div>
-              <strong>Correo</strong>
-              <a href="mailto:fsconstrucciones7@gmail.com">fsconstrucciones7@gmail.com</a>
-            </div>
-          </li>
-          <li>
-            <span class="contact-icon">{% include "website/icons/instagram.svg" %}</span>
-            <div>
-              <strong>Instagram</strong>
-              <a href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener">@fdsconstrucciones</a>
-            </div>
-          </li>
-        </ul>
-
-        <div class="social-buttons">
-          <a class="social-btn" href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener" aria-label="Instagram">
-            {% include "website/icons/instagram.svg" %}
-          </a>
-          <a class="social-btn" href="https://wa.me/56930689483" target="_blank" rel="noopener" aria-label="WhatsApp">
-            {% include "website/icons/whatsapp.svg" %}
-          </a>
-          <a class="social-btn" href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook">
-            {% include "website/icons/facebook.svg" %}
-          </a>
-          <a class="social-btn" href="mailto:fsconstrucciones7@gmail.com" aria-label="Correo">
-            {% include "website/icons/mail.svg" %}
-          </a>
-        </div>
       </div>
 
-      <div class="contact-form-wrap">
-        {% if messages %}
-          {% for message in messages %}
-            <p class="form-alert">{{ message }}</p>
-          {% endfor %}
-        {% endif %}
-        <form method="post" novalidate class="contact-form">
-          {% csrf_token %}
-          <div class="form-row">
-            <label for="{{ form.name.id_for_label }}">Nombre</label>
-            {{ form.name }}
-            {{ form.name.errors }}
+      <div class="contact-grid">
+        <div class="contact-info">
+          <ul class="contact-list">
+            <li>
+              <span class="contact-icon">{% include "website/icons/phone.svg" %}</span>
+              <div>
+                <strong>Teléfono</strong>
+                <a href="tel:+56930689483">+56 9 3068 9483</a> /
+                <a href="tel:+56964989608">+56 9 6498 9608</a>
+              </div>
+            </li>
+            <li>
+              <span class="contact-icon">{% include "website/icons/mail.svg" %}</span>
+              <div>
+                <strong>Correo</strong>
+                <a href="mailto:fsconstrucciones7@gmail.com">fsconstrucciones7@gmail.com</a>
+              </div>
+            </li>
+            <li>
+              <span class="contact-icon">{% include "website/icons/instagram.svg" %}</span>
+              <div>
+                <strong>Instagram</strong>
+                <a href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener">@fdsconstrucciones</a>
+              </div>
+            </li>
+          </ul>
+
+          <div class="social-buttons">
+            <a class="social-btn" href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener" aria-label="Instagram">
+              {% include "website/icons/instagram.svg" %}
+            </a>
+            <a class="social-btn" href="https://wa.me/56930689483" target="_blank" rel="noopener" aria-label="WhatsApp">
+              {% include "website/icons/whatsapp.svg" %}
+            </a>
+            <a class="social-btn" href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook">
+              {% include "website/icons/facebook.svg" %}
+            </a>
+            <a class="social-btn" href="mailto:fsconstrucciones7@gmail.com" aria-label="Correo">
+              {% include "website/icons/mail.svg" %}
+            </a>
           </div>
-          <div class="form-row form-row-split">
-            <div>
-              <label for="{{ form.email.id_for_label }}">Correo electrónico</label>
-              {{ form.email }}
-              {{ form.email.errors }}
+        </div>
+
+        <div class="contact-form-wrap">
+          {% if messages %}
+            {% for message in messages %}
+              <p class="form-alert">{{ message }}</p>
+            {% endfor %}
+          {% endif %}
+          <form method="post" novalidate class="contact-form">
+            {% csrf_token %}
+            <div class="form-row">
+              <label for="{{ form.name.id_for_label }}">Nombre</label>
+              {{ form.name }}
+              {{ form.name.errors }}
             </div>
-            <div>
-              <label for="{{ form.phone.id_for_label }}">Teléfono</label>
-              {{ form.phone }}
+            <div class="form-row form-row-split">
+              <div>
+                <label for="{{ form.email.id_for_label }}">Correo electrónico</label>
+                {{ form.email }}
+                {{ form.email.errors }}
+              </div>
+              <div>
+                <label for="{{ form.phone.id_for_label }}">Teléfono</label>
+                {{ form.phone }}
+              </div>
             </div>
-          </div>
-          <div class="form-row">
-            <label for="{{ form.service.id_for_label }}">Servicio de interés</label>
-            {{ form.service }}
-          </div>
-          <div class="form-row">
-            <label for="{{ form.message.id_for_label }}">Mensaje</label>
-            {{ form.message }}
-            {{ form.message.errors }}
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">Enviar mensaje</button>
-        </form>
+            <div class="form-row">
+              <label for="{{ form.service.id_for_label }}">Servicio de interés</label>
+              {{ form.service }}
+            </div>
+            <div class="form-row">
+              <label for="{{ form.message.id_for_label }}">Mensaje</label>
+              {{ form.message }}
+              {{ form.message.errors }}
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Enviar mensaje</button>
+          </form>
+        </div>
       </div>
     </div>
   </section>
 </main>
 
 <footer class="site-footer">
-  <div class="container footer-inner">
-    <div class="footer-brand">
-      <span class="logo-mark">FS</span>
-      <span class="logo-text">CONSTRUCCIONES<small>SPA</small></span>
-    </div>
-    <p>&copy; {% now "Y" %} FS Construcciones SPA. Todos los derechos reservados.</p>
+  <div class="container footer-inner-simple">
+    <span class="logo-mark">FS</span>
+    <p class="footer-contact-line">
+      <a href="tel:+56930689483">+56 9 3068 9483</a>
+      <span class="footer-divider">|</span>
+      <a href="mailto:fsconstrucciones7@gmail.com">fsconstrucciones7@gmail.com</a>
+    </p>
     <div class="social-buttons social-buttons-sm">
       <a class="social-btn" href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener" aria-label="Instagram">
         {% include "website/icons/instagram.svg" %}
@@ -248,6 +285,47 @@
         {% include "website/icons/facebook.svg" %}
       </a>
     </div>
+    <p class="footer-copy">&copy; {% now "Y" %} FS Construcciones SPA. Todos los derechos reservados.</p>
   </div>
 </footer>
+
+<script>
+(function () {
+  var filters = document.querySelectorAll(".gallery-filter");
+  var items = document.querySelectorAll(".gallery-item");
+
+  filters.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      filters.forEach(function (b) { b.classList.remove("is-active"); });
+      btn.classList.add("is-active");
+      var filter = btn.getAttribute("data-filter");
+      items.forEach(function (item) {
+        var show = filter === "all" || item.getAttribute("data-category") === filter;
+        item.hidden = !show;
+      });
+    });
+  });
+
+  var lightbox = document.getElementById("lightbox");
+  var lightboxImg = document.getElementById("lightboxImg");
+  var lightboxClose = document.getElementById("lightboxClose");
+
+  items.forEach(function (item) {
+    item.addEventListener("click", function () {
+      lightboxImg.src = item.getAttribute("data-full");
+      lightboxImg.alt = item.querySelector("img").alt;
+      lightbox.hidden = false;
+    });
+  });
+
+  function closeLightbox() { lightbox.hidden = true; lightboxImg.src = ""; }
+  lightboxClose.addEventListener("click", closeLightbox);
+  lightbox.addEventListener("click", function (e) {
+    if (e.target === lightbox) closeLightbox();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeLightbox();
+  });
+})();
+</script>
 {% endblock %}
