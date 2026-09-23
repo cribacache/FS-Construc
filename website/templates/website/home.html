@@ -33,8 +33,49 @@
       <div class="hero-actions">
         <a href="#contacto" class="btn btn-primary">Haz tu proyecto con nosotros</a>
       </div>
+      <button type="button" class="hero-prompt" id="buildPromptBtn">
+        ¿Qué quieres construir?
+        <span class="hero-prompt-arrow" aria-hidden="true">&rarr;</span>
+      </button>
     </div>
   </section>
+
+  <!-- BUILD PANEL (qué quieres construir) -->
+  <div class="build-panel" id="buildPanel" hidden>
+    <button type="button" class="build-panel-close" id="buildPanelClose" aria-label="Cerrar">&times;</button>
+    <div class="build-panel-inner">
+      <a href="#portafolio" class="build-option">
+        <div class="build-option-media">
+          <img src="{% static 'img/gallery/fachadas-1.jpg' %}" alt="" loading="lazy">
+        </div>
+        <div class="build-option-body">
+          <h3>Un proyecto nuevo</h3>
+          <p>Diseñamos y construimos tu proyecto de principio a fin, adaptándonos a tus necesidades y tu presupuesto.</p>
+          <span class="build-option-cta">Ver portafolio <span aria-hidden="true">&rarr;</span></span>
+        </div>
+      </a>
+      <a href="#servicios" class="build-option">
+        <div class="build-option-media">
+          <img src="{% static 'img/gallery/quinchos-1.jpg' %}" alt="" loading="lazy">
+        </div>
+        <div class="build-option-body">
+          <h3>Una remodelación</h3>
+          <p>Transformamos tus espacios actuales: cocinas, baños, terrazas y fachadas con terminaciones de primer nivel.</p>
+          <span class="build-option-cta">Ver servicios <span aria-hidden="true">&rarr;</span></span>
+        </div>
+      </a>
+      <a href="#contacto" class="build-option">
+        <div class="build-option-media">
+          <img src="{% static 'img/gallery/pavimentos-1.jpg' %}" alt="" loading="lazy">
+        </div>
+        <div class="build-option-body">
+          <h3>Una cotización</h3>
+          <p>Cuéntanos tu idea y te contactamos a la brevedad con una propuesta a medida, sin compromiso.</p>
+          <span class="build-option-cta">Contáctanos <span aria-hidden="true">&rarr;</span></span>
+        </div>
+      </a>
+    </div>
+  </div>
 
   <!-- INTRO / STATEMENT -->
   <section class="section intro-section">
@@ -59,26 +100,43 @@
         primer nivel.
       </p>
 
-      <div class="values-grid">
-        <div class="value-card">
-          <div class="value-icon">{% include "website/icons/shield.svg" %}</div>
-          <h3>Garantía</h3>
-          <p>Respaldamos cada trabajo con materiales de calidad y mano de obra certificada.</p>
+      <div class="values-tabs">
+        <div class="values-tab-list" role="tablist">
+          <button type="button" class="values-tab is-active" data-value="0" role="tab" aria-selected="true">
+            <span class="values-tab-num">01</span> Garantía
+          </button>
+          <button type="button" class="values-tab" data-value="1" role="tab" aria-selected="false">
+            <span class="values-tab-num">02</span> Compromiso
+          </button>
+          <button type="button" class="values-tab" data-value="2" role="tab" aria-selected="false">
+            <span class="values-tab-num">03</span> Profesionalismo
+          </button>
+          <button type="button" class="values-tab" data-value="3" role="tab" aria-selected="false">
+            <span class="values-tab-num">04</span> Dedicación
+          </button>
         </div>
-        <div class="value-card">
-          <div class="value-icon">{% include "website/icons/handshake.svg" %}</div>
-          <h3>Compromiso</h3>
-          <p>Cumplimos plazos y acuerdos, manteniéndote informado en cada etapa.</p>
-        </div>
-        <div class="value-card">
-          <div class="value-icon">{% include "website/icons/badge.svg" %}</div>
-          <h3>Profesionalismo</h3>
-          <p>Equipo técnico especializado en diseño, construcción y remodelación.</p>
-        </div>
-        <div class="value-card">
-          <div class="value-icon">{% include "website/icons/target.svg" %}</div>
-          <h3>Dedicación</h3>
-          <p>Personalizamos cada proyecto según tus gustos y necesidades reales.</p>
+
+        <div class="values-tab-panel">
+          <div class="values-tab-panel-item is-active" data-value="0">
+            <div class="value-icon">{% include "website/icons/shield.svg" %}</div>
+            <h3>Garantía</h3>
+            <p>Respaldamos cada trabajo con materiales de calidad y mano de obra certificada.</p>
+          </div>
+          <div class="values-tab-panel-item" data-value="1">
+            <div class="value-icon">{% include "website/icons/handshake.svg" %}</div>
+            <h3>Compromiso</h3>
+            <p>Cumplimos plazos y acuerdos, manteniéndote informado en cada etapa.</p>
+          </div>
+          <div class="values-tab-panel-item" data-value="2">
+            <div class="value-icon">{% include "website/icons/badge.svg" %}</div>
+            <h3>Profesionalismo</h3>
+            <p>Equipo técnico especializado en diseño, construcción y remodelación.</p>
+          </div>
+          <div class="values-tab-panel-item" data-value="3">
+            <div class="value-icon">{% include "website/icons/target.svg" %}</div>
+            <h3>Dedicación</h3>
+            <p>Personalizamos cada proyecto según tus gustos y necesidades reales.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -323,8 +381,39 @@
   lightbox.addEventListener("click", function (e) {
     if (e.target === lightbox) closeLightbox();
   });
+
+  var buildPromptBtn = document.getElementById("buildPromptBtn");
+  var buildPanel = document.getElementById("buildPanel");
+  var buildPanelClose = document.getElementById("buildPanelClose");
+
+  function closeBuildPanel() { buildPanel.hidden = true; }
+  buildPromptBtn.addEventListener("click", function () { buildPanel.hidden = false; });
+  buildPanelClose.addEventListener("click", closeBuildPanel);
+  buildPanel.addEventListener("click", function (e) {
+    if (e.target === buildPanel) closeBuildPanel();
+  });
+
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") closeLightbox();
+    if (e.key !== "Escape") return;
+    closeLightbox();
+    closeBuildPanel();
+  });
+
+  var valueTabs = document.querySelectorAll(".values-tab");
+  var valuePanels = document.querySelectorAll(".values-tab-panel-item");
+  valueTabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      var value = tab.getAttribute("data-value");
+      valueTabs.forEach(function (t) {
+        t.classList.remove("is-active");
+        t.setAttribute("aria-selected", "false");
+      });
+      tab.classList.add("is-active");
+      tab.setAttribute("aria-selected", "true");
+      valuePanels.forEach(function (p) {
+        p.classList.toggle("is-active", p.getAttribute("data-value") === value);
+      });
+    });
   });
 })();
 </script>
