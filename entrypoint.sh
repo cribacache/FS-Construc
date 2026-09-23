@@ -3,6 +3,7 @@ set -e
 
 python manage.py collectstatic --noinput
 python manage.py migrate --noinput
+python manage.py import_gallery || true
 
 if [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then
   python manage.py createsuperuser --noinput || true

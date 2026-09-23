@@ -17,8 +17,14 @@ Including another URLconf
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
+from django.views.static import serve
 
 urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     path('', include('website.urls')),
+    path(
+        f'{settings.MEDIA_URL.lstrip("/")}<path:path>',
+        serve,
+        {'document_root': settings.MEDIA_ROOT},
+    ),
 ]

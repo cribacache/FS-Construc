@@ -9,9 +9,9 @@
       <span class="logo-text">CONSTRUCCIONES<small>SPA</small></span>
     </a>
     <nav class="main-nav">
+      <a href="#portafolio">Portafolio</a>
       <a href="#nosotros">Nosotros</a>
       <a href="#servicios">Servicios</a>
-      <a href="#portafolio">Portafolio</a>
       <a href="#contacto">Contacto</a>
     </nav>
     <a href="#contacto" class="btn btn-outline header-cta">Contáctanos</a>
@@ -21,7 +21,7 @@
 <main>
   <!-- HERO -->
   <section id="inicio" class="hero hero-center">
-    <div class="hero-bg" style="background-image:url('{% static "img/gallery/hero.jpg" %}')" aria-hidden="true"></div>
+    <div class="hero-bg" style="background-image:url('{% if hero_bg_url %}{{ hero_bg_url }}{% else %}{% static fallback_static.hero_bg %}{% endif %}')" aria-hidden="true"></div>
     <div class="hero-overlay hero-overlay-center" aria-hidden="true"></div>
     <div class="container hero-inner">
       <p class="eyebrow">Diseño &amp; Construcción a medida</p>
@@ -46,7 +46,7 @@
     <div class="build-panel-inner">
       <a href="#portafolio" class="build-option">
         <div class="build-option-media">
-          <img src="{% static 'img/gallery/fachadas-1.jpg' %}" alt="" loading="lazy">
+          <img src="{% if build_project_url %}{{ build_project_url }}{% else %}{% static fallback_static.build_project %}{% endif %}" alt="" loading="lazy">
         </div>
         <div class="build-option-body">
           <h3>Un proyecto nuevo</h3>
@@ -56,7 +56,7 @@
       </a>
       <a href="#servicios" class="build-option">
         <div class="build-option-media">
-          <img src="{% static 'img/gallery/quinchos-1.jpg' %}" alt="" loading="lazy">
+          <img src="{% if build_remodel_url %}{{ build_remodel_url }}{% else %}{% static fallback_static.build_remodel %}{% endif %}" alt="" loading="lazy">
         </div>
         <div class="build-option-body">
           <h3>Una remodelación</h3>
@@ -66,7 +66,7 @@
       </a>
       <a href="#contacto" class="build-option">
         <div class="build-option-media">
-          <img src="{% static 'img/gallery/pavimentos-1.jpg' %}" alt="" loading="lazy">
+          <img src="{% if build_quote_url %}{{ build_quote_url }}{% else %}{% static fallback_static.build_quote %}{% endif %}" alt="" loading="lazy">
         </div>
         <div class="build-option-body">
           <h3>Una cotización</h3>
@@ -77,8 +77,42 @@
     </div>
   </div>
 
+  <!-- PORTAFOLIO (lo primero después del hero: la experiencia son las fotos) -->
+  <section id="portafolio" class="section">
+    <div class="container">
+      <p class="section-eyebrow">Nuestro trabajo</p>
+      <h2 class="section-title">Portafolio de proyectos</h2>
+      <p class="section-lead">
+        Una muestra real de obras ejecutadas por FS Construcciones SPA.
+      </p>
+
+      <div class="gallery-filters">
+        <button type="button" class="gallery-filter is-active" data-filter="all">Todos</button>
+        {% for cat in gallery_categories %}
+        <button type="button" class="gallery-filter" data-filter="{{ cat.slug }}">{{ cat.label }}</button>
+        {% endfor %}
+      </div>
+
+      <div class="gallery-grid">
+        {% for item in gallery %}
+        <button type="button" class="gallery-item" data-category="{{ item.category }}" data-full="{{ item.image.url }}">
+          <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy">
+          <span class="gallery-item-label">{{ item.title }}</span>
+        </button>
+        {% endfor %}
+      </div>
+
+      <p class="gallery-footnote">Visita nuestro Instagram <a href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener">@fdsconstrucciones</a> para ver más proyectos realizados.</p>
+    </div>
+  </section>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Cerrar">&times;</button>
+    <img src="" alt="" id="lightboxImg">
+  </div>
+
   <!-- INTRO / STATEMENT -->
-  <section class="section intro-section">
+  <section class="section intro-section section-soft">
     <div class="container intro-inner">
       <h2 class="intro-title">Construimos y renovamos espacios pensados para durar.</h2>
       <p class="intro-lead">
@@ -86,7 +120,7 @@
         para entregarles un proyecto que combine funcionalidad, calidad y estilo, cuidando
         cada detalle de principio a fin.
       </p>
-      <a href="#portafolio" class="btn btn-outline">Ver portafolio</a>
+      <a href="#servicios" class="btn btn-outline">Ver servicios</a>
     </div>
   </section>
 
@@ -164,42 +198,8 @@
     </div>
   </section>
 
-  <!-- PORTAFOLIO -->
-  <section id="portafolio" class="section section-soft">
-    <div class="container">
-      <p class="section-eyebrow">Nuestro trabajo</p>
-      <h2 class="section-title">Portafolio de proyectos</h2>
-      <p class="section-lead">
-        Una muestra real de obras ejecutadas por FS Construcciones SPA.
-      </p>
-
-      <div class="gallery-filters">
-        <button type="button" class="gallery-filter is-active" data-filter="all">Todos</button>
-        {% for cat in gallery_categories %}
-        <button type="button" class="gallery-filter" data-filter="{{ cat.slug }}">{{ cat.label }}</button>
-        {% endfor %}
-      </div>
-
-      <div class="gallery-grid">
-        {% for item in gallery %}
-        <button type="button" class="gallery-item" data-category="{{ item.category }}" data-full="{% static 'img/gallery/'|add:item.image|add:'.jpg' %}">
-          <img src="{% static 'img/gallery/'|add:item.image|add:'.jpg' %}" alt="{{ item.label }}" loading="lazy">
-          <span class="gallery-item-label">{{ item.label }}</span>
-        </button>
-        {% endfor %}
-      </div>
-
-      <p class="gallery-footnote">Visita nuestro Instagram <a href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener">@fdsconstrucciones</a> para ver más proyectos realizados.</p>
-    </div>
-  </section>
-
-  <div class="lightbox" id="lightbox" hidden>
-    <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Cerrar">&times;</button>
-    <img src="" alt="" id="lightboxImg">
-  </div>
-
   <!-- PROCESO -->
-  <section id="proceso" class="section">
+  <section id="proceso" class="section section-soft">
     <div class="container">
       <p class="section-eyebrow">Cómo trabajamos</p>
       <h2 class="section-title">De la idea a la entrega</h2>

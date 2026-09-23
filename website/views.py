@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 
 from .forms import ContactForm
+from .models import GalleryImage
 
 SERVICES = [
     {
@@ -56,28 +57,22 @@ SERVICES = [
     },
 ]
 
-GALLERY_CATEGORIES = [
-    {"slug": "fachadas", "label": "Fachadas y Exteriores"},
-    {"slug": "salas-tv", "label": "Salas de TV"},
-    {"slug": "quinchos", "label": "Quinchos y Cocinas Exteriores"},
-    {"slug": "estructuras", "label": "Estructuras y Carpintería"},
-    {"slug": "pavimentos", "label": "Pavimentos"},
-]
+# Fallback static images, used only if nothing has been uploaded yet for that slot.
+FALLBACK_STATIC = {
+    "hero_bg": "img/gallery/hero.jpg",
+    "build_project": "img/gallery/fachadas-1.jpg",
+    "build_remodel": "img/gallery/quinchos-1.jpg",
+    "build_quote": "img/gallery/pavimentos-1.jpg",
+}
 
-GALLERY = [
-    {"image": "fachadas-1", "category": "fachadas", "label": "Fachadas y Exteriores"},
-    {"image": "fachadas-2", "category": "fachadas", "label": "Fachadas y Exteriores"},
-    {"image": "fachadas-3", "category": "fachadas", "label": "Fachadas y Exteriores"},
-    {"image": "salas-tv-1", "category": "salas-tv", "label": "Salas de TV"},
-    {"image": "salas-tv-2", "category": "salas-tv", "label": "Salas de TV"},
-    {"image": "quinchos-1", "category": "quinchos", "label": "Quinchos y Cocinas Exteriores"},
-    {"image": "quinchos-2", "category": "quinchos", "label": "Quinchos y Cocinas Exteriores"},
-    {"image": "estructuras-1", "category": "estructuras", "label": "Estructuras y Carpintería"},
-    {"image": "estructuras-2", "category": "estructuras", "label": "Estructuras y Carpintería"},
-    {"image": "estructuras-3", "category": "estructuras", "label": "Estructuras y Carpintería"},
-    {"image": "pavimentos-1", "category": "pavimentos", "label": "Pavimentos"},
-    {"image": "pavimentos-2", "category": "pavimentos", "label": "Pavimentos"},
-]
+
+def _singleton_image(placement):
+    img = (
+        GalleryImage.objects.filter(placement=placement, is_active=True)
+        .order_by("-created_at")
+        .first()
+    )
+    return img.image.url if img else None
 
 
 def home(request):
@@ -93,10 +88,24 @@ def home(request):
     else:
         form = ContactForm()
 
+    gallery_qs = GalleryImage.objects.filter(placement="gallery", is_active=True)
+    category_labels = dict(GalleryImage.CATEGORY_CHOICES)
+    gallery_categories = [
+        {"slug": slug, "label": category_labels[slug]}
+        for slug in gallery_qs.order_by().values_list("category", flat=True).distinct()
+        if slug in category_labels
+    ]
+    gallery_categories.sort(key=lambda c: c["label"])
+
     context = {
         "form": form,
         "services": SERVICES,
-        "gallery": GALLERY,
-        "gallery_categories": GALLERY_CATEGORIES,
+        "gallery": gallery_qs,
+        "gallery_categories": gallery_categories,
+        "hero_bg_url": _singleton_image("hero_bg"),
+        "build_project_url": _singleton_image("build_project"),
+        "build_remodel_url": _singleton_image("build_remodel"),
+        "build_quote_url": _singleton_image("build_quote"),
+        "fallback_static": FALLBACK_STATIC,
     }
     return render(request, "website/home.html", context)
