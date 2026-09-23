@@ -22,9 +22,16 @@ from django.views.static import serve
 urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     path('', include('website.urls')),
-    path(
-        f'{settings.MEDIA_URL.lstrip("/")}<path:path>',
-        serve,
-        {'document_root': settings.MEDIA_ROOT},
-    ),
 ]
+
+# Local fallback only: when photos are stored in Cloud Storage (GS_BUCKET_NAME
+# set), MEDIA_URL points straight at storage.googleapis.com and Django never
+# needs to serve these files itself.
+if not settings.GS_BUCKET_NAME:
+    urlpatterns.append(
+        path(
+            f'{settings.MEDIA_URL.lstrip("/")}<path:path>',
+            serve,
+            {'document_root': settings.MEDIA_ROOT},
+        )
+    )
