@@ -1,7 +1,9 @@
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
-from .forms import ContactForm
+from .forms import ContactForm, GalleryImageEditForm, GalleryImageUploadForm
 from .models import GalleryImage
 
 SERVICES = [
@@ -109,3 +111,47 @@ def home(request):
         "fallback_static": FALLBACK_STATIC,
     }
     return render(request, "website/home.html", context)
+
+
+@login_required(login_url="dashboard_login")
+def dashboard(request):
+    if request.method == "POST":
+        upload_form = GalleryImageUploadForm(request.POST, request.FILES)
+        if upload_form.is_valid():
+            upload_form.save()
+            messages.success(request, "¡Foto subida con éxito!")
+            return redirect("dashboard")
+    else:
+        upload_form = GalleryImageUploadForm()
+
+    photos = GalleryImage.objects.all().order_by("placement", "order", "-created_at")
+    photo_rows = [(photo, GalleryImageEditForm(instance=photo)) for photo in photos]
+
+    context = {
+        "upload_form": upload_form,
+        "photo_rows": photo_rows,
+    }
+    return render(request, "website/dashboard.html", context)
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def dashboard_update(request, pk):
+    photo = get_object_or_404(GalleryImage, pk=pk)
+    form = GalleryImageEditForm(request.POST, instance=photo)
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Cambios guardados.")
+    else:
+        messages.error(request, "No se pudo guardar: revisa los datos.")
+    return redirect("dashboard")
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def dashboard_delete(request, pk):
+    photo = get_object_or_404(GalleryImage, pk=pk)
+    photo.image.delete(save=False)
+    photo.delete()
+    messages.success(request, "Foto eliminada.")
+    return redirect("dashboard")

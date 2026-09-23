@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import ContactMessage
+from .models import ContactMessage, GalleryImage
 
 SERVICE_CHOICES = [
     ("", "Selecciona un servicio"),
@@ -31,4 +31,22 @@ class ContactForm(forms.ModelForm):
             "message": forms.Textarea(
                 attrs={"placeholder": "Cuéntanos sobre tu proyecto...", "rows": 5}
             ),
+        }
+
+
+class GalleryImageUploadForm(forms.ModelForm):
+    class Meta:
+        model = GalleryImage
+        fields = ["image", "title", "category", "placement"]
+        widgets = {
+            "title": forms.TextInput(attrs={"placeholder": "Ej: Fachada casa Vitacura"}),
+        }
+
+
+class GalleryImageEditForm(forms.ModelForm):
+    class Meta:
+        model = GalleryImage
+        fields = ["title", "category", "placement", "is_active", "order"]
+        widgets = {
+            "order": forms.NumberInput(attrs={"style": "width:70px"}),
         }

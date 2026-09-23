@@ -670,3 +670,151 @@ img { max-width: 100%; display: block; }
 .footer-contact-line a:hover { color: var(--cream); }
 .footer-divider { margin: 0 10px; color: var(--text-on-dark-soft); }
 .footer-copy { margin: 0; font-size: 0.8rem; color: var(--text-on-dark-soft); }
+
+/* ---------- Photo dashboard ---------- */
+.btn-sm { padding: 9px 18px; font-size: 0.85rem; }
+
+.dash-auth {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dark);
+  padding: 24px;
+}
+.dash-auth-card {
+  width: 100%;
+  max-width: 380px;
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.dash-auth-logo { margin: 0 auto 18px; }
+.dash-auth-title { font-size: 1.5rem; margin-bottom: 8px; }
+.dash-auth-lead { color: var(--text-light); font-size: 0.92rem; margin-bottom: 26px; }
+.dash-auth-form { text-align: left; }
+.dash-auth-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  background: var(--bg-soft);
+}
+.dash-auth-form input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(169, 117, 75, 0.15);
+}
+.dash-auth-error { text-align: left; }
+.dash-auth-back {
+  display: inline-block;
+  margin-top: 22px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+.dash-auth-back:hover { color: var(--ink); }
+
+.dash-header .header-inner { flex-wrap: wrap; gap: 14px; }
+.dash-header-title {
+  font-family: var(--font-heading);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+}
+.dash-header-actions { display: flex; align-items: center; gap: 10px; }
+.dash-header-actions form { margin: 0; }
+
+.dash-main { background: var(--bg-soft); min-height: 80vh; padding: 40px 0 80px; }
+.dash-flash { max-width: 700px; margin: 0 0 20px; }
+
+.dash-card {
+  background: #fff;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 32px;
+  margin-bottom: 28px;
+}
+.dash-card-title { font-size: 1.3rem; margin-bottom: 10px; }
+.dash-card-lead { color: var(--text-light); font-size: 0.9rem; margin-bottom: 22px; max-width: 640px; }
+
+.dash-upload-form input[type="file"],
+.dash-upload-form input[type="text"],
+.dash-upload-form select,
+.dash-photo-form input[type="text"],
+.dash-photo-form select,
+.dash-photo-form input[type="number"] {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  background: var(--bg-soft);
+  color: var(--text);
+}
+.dash-upload-form select:focus,
+.dash-upload-form input:focus,
+.dash-photo-form select:focus,
+.dash-photo-form input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(169, 117, 75, 0.15);
+}
+
+.dash-photo-list { display: flex; flex-direction: column; gap: 16px; }
+.dash-photo-row {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  gap: 20px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+@media (max-width: 780px) {
+  .dash-photo-row { grid-template-columns: 90px 1fr; }
+  .dash-photo-delete { grid-column: 2; justify-self: end; }
+}
+.dash-photo-thumb {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+@media (max-width: 780px) {
+  .dash-photo-thumb { width: 90px; height: 70px; }
+}
+.dash-photo-form { display: flex; flex-direction: column; gap: 12px; }
+.dash-photo-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.dash-photo-fields .form-row { margin-bottom: 0; }
+.dash-photo-fields label {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+.dash-photo-order input { width: 80px; }
+.dash-photo-active label { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.dash-photo-active input { width: auto; }
+.dash-photo-actions { display: flex; }
+.dash-photo-delete { display: flex; align-items: start; }
+.dash-delete-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: #b23b3b;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.dash-delete-btn:hover { background: #b23b3b; color: #fff; }

@@ -1,0 +1,34 @@
+{% extends "website/base.html" %}
+
+{% block title %}Panel de fotos | FS Construcciones SPA{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block content %}
+<div class="dash-auth">
+  <div class="dash-auth-card">
+    <span class="logo-mark dash-auth-logo">FS</span>
+    <h1 class="dash-auth-title">Panel de fotos</h1>
+    <p class="dash-auth-lead">Inicia sesión para subir y ordenar las fotos del sitio.</p>
+
+    {% if form.errors %}
+      <p class="form-alert dash-auth-error">Usuario o contraseña incorrectos.</p>
+    {% endif %}
+
+    <form method="post" class="dash-auth-form">
+      {% csrf_token %}
+      <div class="form-row">
+        <label for="id_username">Usuario</label>
+        <input type="text" name="username" id="id_username" autofocus required>
+      </div>
+      <div class="form-row">
+        <label for="id_password">Contraseña</label>
+        <input type="password" name="password" id="id_password" required>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+    </form>
+
+    <a href="{% url 'home' %}" class="dash-auth-back">&larr; Volver al sitio</a>
+  </div>
+</div>
+{% endblock %}

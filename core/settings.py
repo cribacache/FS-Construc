@@ -135,6 +135,11 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# Photo dashboard auth (custom-branded login, not the Django admin)
+LOGIN_URL = 'dashboard_login'
+LOGIN_REDIRECT_URL = 'dashboard'
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
