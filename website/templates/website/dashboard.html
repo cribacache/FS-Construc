@@ -1,4 +1,5 @@
 {% extends "website/base.html" %}
+{% load static %}
 
 {% block title %}Panel de fotos | FS Construcciones SPA{% endblock %}
 {% block extra_head %}<meta name="robots" content="noindex">{% endblock %}
@@ -7,7 +8,7 @@
 <header class="site-header dash-header">
   <div class="container header-inner">
     <a href="{% url 'home' %}" class="logo">
-      <span class="logo-mark">FS</span>
+      <img src="{% static 'img/logo/mark-white.png' %}" alt="FS Construcciones" class="logo-mark-img">
       <span class="logo-text">CONSTRUCCIONES<small>SPA</small></span>
     </a>
     <span class="dash-header-title">Panel de fotos</span>

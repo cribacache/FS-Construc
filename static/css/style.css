@@ -86,20 +86,8 @@ img { max-width: 100%; display: block; }
   gap: 24px;
 }
 .logo { display: flex; align-items: center; gap: 12px; }
-.logo-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: var(--ink);
-  color: #fff;
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 1.05rem;
-  letter-spacing: 0.5px;
-}
+.logo-mark-img { height: 40px; width: auto; display: block; }
+.footer-logo-img { height: 64px; width: auto; display: block; }
 .logo-text {
   color: #fff;
   font-weight: 700;
@@ -691,7 +679,7 @@ img { max-width: 100%; display: block; }
   text-align: center;
   box-shadow: var(--shadow);
 }
-.dash-auth-logo { margin: 0 auto 18px; }
+.dash-auth-logo { height: 56px; width: auto; margin: 0 auto 18px; }
 .dash-auth-title { font-size: 1.5rem; margin-bottom: 8px; }
 .dash-auth-lead { color: var(--text-light); font-size: 0.92rem; margin-bottom: 26px; }
 .dash-auth-form { text-align: left; }

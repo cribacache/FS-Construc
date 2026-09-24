@@ -1,4 +1,5 @@
 {% extends "website/base.html" %}
+{% load static %}
 
 {% block title %}Panel de fotos | FS Construcciones SPA{% endblock %}
 {% block extra_head %}<meta name="robots" content="noindex">{% endblock %}
@@ -6,7 +7,7 @@
 {% block content %}
 <div class="dash-auth">
   <div class="dash-auth-card">
-    <span class="logo-mark dash-auth-logo">FS</span>
+    <img src="{% static 'img/logo/mark-black.png' %}" alt="FS Construcciones" class="dash-auth-logo">
     <h1 class="dash-auth-title">Panel de fotos</h1>
     <p class="dash-auth-lead">Inicia sesión para subir y ordenar las fotos del sitio.</p>
 
