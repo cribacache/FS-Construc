@@ -62,8 +62,8 @@ SERVICES = [
 # Fallback static images, used only if nothing has been uploaded yet for that slot.
 FALLBACK_STATIC = {
     "hero_bg": "img/gallery/hero.jpg",
-    "build_project": "img/gallery/fachadas-1.jpg",
-    "build_remodel": "img/gallery/quinchos-1.jpg",
+    "build_project": "img/gallery/fachadas-2.jpg",
+    "build_remodel": "img/gallery/remodelaciones-1.jpg",
     "build_quote": "img/gallery/pavimentos-1.jpg",
 }
 

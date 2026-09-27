@@ -13,32 +13,69 @@ CATEGORY_LABELS = dict(GalleryImage.CATEGORY_CHOICES)
 GALLERY_FILES = [
     ("fachadas-1.jpg", "fachadas", "Fachadas y Exteriores"),
     ("fachadas-2.jpg", "fachadas", "Fachadas y Exteriores"),
-    ("fachadas-3.jpg", "fachadas", "Fachadas y Exteriores"),
+    ("cocinas-1.jpg", "cocinas", "Cocinas y Muebles"),
+    ("cocinas-2.jpg", "cocinas", "Cocinas y Muebles"),
+    ("cocinas-3.jpg", "cocinas", "Cocinas y Muebles"),
+    ("cocinas-4.jpg", "cocinas", "Cocinas y Muebles"),
+    ("cocinas-5.jpg", "cocinas", "Cocinas y Muebles"),
+    ("cocinas-6.jpg", "cocinas", "Cocinas y Muebles"),
     ("salas-tv-1.jpg", "salas-tv", "Salas de TV"),
     ("salas-tv-2.jpg", "salas-tv", "Salas de TV"),
+    ("salas-tv-3.jpg", "salas-tv", "Salas de TV"),
+    ("salas-tv-4.jpg", "salas-tv", "Salas de TV"),
+    ("pergolas-1.jpg", "pergolas", "Pérgolas y Terrazas"),
+    ("pergolas-2.jpg", "pergolas", "Pérgolas y Terrazas"),
+    ("pergolas-3.jpg", "pergolas", "Pérgolas y Terrazas"),
+    ("pergolas-4.jpg", "pergolas", "Pérgolas y Terrazas"),
+    ("espejos-1.jpg", "espejos", "Paneles y Espejos LED"),
+    ("espejos-2.jpg", "espejos", "Paneles y Espejos LED"),
+    ("espejos-3.jpg", "espejos", "Paneles y Espejos LED"),
+    ("espejos-4.jpg", "espejos", "Paneles y Espejos LED"),
     ("quinchos-1.jpg", "quinchos", "Quinchos y Cocinas Exteriores"),
     ("quinchos-2.jpg", "quinchos", "Quinchos y Cocinas Exteriores"),
+    ("quinchos-3.jpg", "quinchos", "Quinchos y Cocinas Exteriores"),
+    ("quinchos-4.jpg", "quinchos", "Quinchos y Cocinas Exteriores"),
     ("estructuras-1.jpg", "estructuras", "Estructuras y Carpintería"),
     ("estructuras-2.jpg", "estructuras", "Estructuras y Carpintería"),
     ("estructuras-3.jpg", "estructuras", "Estructuras y Carpintería"),
+    ("estructuras-4.jpg", "estructuras", "Estructuras y Carpintería"),
+    ("pintura-1.jpg", "pintura", "Pintura"),
+    ("pintura-2.jpg", "pintura", "Pintura"),
+    ("pintura-3.jpg", "pintura", "Pintura"),
+    ("pintura-4.jpg", "pintura", "Pintura"),
+    ("remodelaciones-1.jpg", "remodelaciones", "Remodelaciones"),
+    ("remodelaciones-2.jpg", "remodelaciones", "Remodelaciones"),
+    ("remodelaciones-3.jpg", "remodelaciones", "Remodelaciones"),
     ("pavimentos-1.jpg", "pavimentos", "Pavimentos"),
     ("pavimentos-2.jpg", "pavimentos", "Pavimentos"),
+    ("pavimentos-3.jpg", "pavimentos", "Pavimentos"),
+    ("pavimentos-4.jpg", "pavimentos", "Pavimentos"),
 ]
 
 BUILD_PANEL_FILES = [
-    ("fachadas-1.jpg", "fachadas", "build_project", "Un proyecto nuevo"),
-    ("quinchos-1.jpg", "quinchos", "build_remodel", "Una remodelación"),
+    ("fachadas-2.jpg", "fachadas", "build_project", "Un proyecto nuevo"),
+    ("remodelaciones-1.jpg", "remodelaciones", "build_remodel", "Una remodelación"),
     ("pavimentos-1.jpg", "pavimentos", "build_quote", "Una cotización"),
 ]
 
 
 class Command(BaseCommand):
-    help = "One-off import of the curated static gallery photos into the GalleryImage table."
+    help = "Import the curated static gallery photos into the GalleryImage table."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help="Delete all existing GalleryImage rows first, then import the current curated set.",
+        )
 
     def handle(self, *args, **options):
         if GalleryImage.objects.exists():
-            self.stdout.write("GalleryImage table is not empty, skipping import.")
-            return
+            if not options["force"]:
+                self.stdout.write("GalleryImage table is not empty, skipping import.")
+                return
+            deleted, _ = GalleryImage.objects.all().delete()
+            self.stdout.write(f"--force: deleted {deleted} existing rows.")
 
         order = 0
         for filename, category, label in GALLERY_FILES:

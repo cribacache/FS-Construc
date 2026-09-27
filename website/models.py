@@ -12,6 +12,7 @@ class GalleryImage(models.Model):
         ("estructuras", "Estructuras y Carpintería"),
         ("pintura", "Pintura"),
         ("pavimentos", "Pavimentos"),
+        ("remodelaciones", "Remodelaciones"),
     ]
     PLACEMENT_CHOICES = [
         ("gallery", "Galería de portafolio"),
