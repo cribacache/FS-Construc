@@ -12,6 +12,8 @@ SERVICE_CHOICES = [
     ("pintura", "Pintura interior / exterior"),
     ("pavimentos", "Pavimentos y estampados de hormigón"),
     ("estructuras", "Estructuras metálicas"),
+    ("ley-ductos", "Ley de Ductos (RIT)"),
+    ("ccdd", "Corrientes débiles y seguridad (CCDD)"),
     ("otro", "Otro"),
 ]
 

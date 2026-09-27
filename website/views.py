@@ -57,6 +57,16 @@ SERVICES = [
         "title": "Estructuras metálicas",
         "description": "Estructuras metálicas seguras y eficientes para diversas edificaciones.",
     },
+    {
+        "icon": "website/icons/network.svg",
+        "title": "Ley de Ductos (RIT)",
+        "description": "Cumplimiento de la Ley N° 20.808: salas técnicas (SOTI/SOTS/SOTU), canalizaciones, tendido de fibra óptica y tramitación del Informe Favorable de Telecomunicaciones.",
+    },
+    {
+        "icon": "website/icons/shield.svg",
+        "title": "Corrientes débiles y seguridad (CCDD)",
+        "description": "CCTV, control de acceso, citofonía y videoporteros, detección de incendios y redes de datos para una conectividad y seguridad 100% integradas.",
+    },
 ]
 
 # Fallback static images, used only if nothing has been uploaded yet for that slot.
