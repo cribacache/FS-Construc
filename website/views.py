@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -61,13 +62,98 @@ SERVICES = [
         "icon": "website/icons/network.svg",
         "title": "Ley de Ductos (RIT)",
         "description": "Cumplimiento de la Ley N° 20.808: salas técnicas (SOTI/SOTS/SOTU), canalizaciones, tendido de fibra óptica y tramitación del Informe Favorable de Telecomunicaciones.",
+        "slug": "ley-ductos",
     },
     {
         "icon": "website/icons/shield.svg",
         "title": "Corrientes débiles y seguridad (CCDD)",
         "description": "CCTV, control de acceso, citofonía y videoporteros, detección de incendios y redes de datos para una conectividad y seguridad 100% integradas.",
+        "slug": "ccdd",
     },
 ]
+
+SERVICE_DETAILS = {
+    "ley-ductos": {
+        "title": "Ley de Ductos (RIT)",
+        "eyebrow": "Cumplimiento Ley N° 20.808",
+        "hero_image": "img/gallery/estructuras-4.jpg",
+        "intro": [
+            "Ofrecemos una solución “llave en mano” para el cumplimiento estricto de la "
+            "normativa de telecomunicaciones (RIT), unificando la ejecución de la obra civil "
+            "con el despliegue tecnológico.",
+            "Nos aseguramos de que su proyecto avance sin retrasos operativos ni multas "
+            "normativas, garantizando la conectividad desde las bases.",
+        ],
+        "steps": [
+            {
+                "icon": "website/icons/truss.svg",
+                "title": "Infraestructura física y metalmecánica",
+                "description": (
+                    "Construcción y habilitación de salas técnicas obligatorias (SOTI, SOTS, "
+                    "SOTU) y fabricación e instalación de canalizaciones verticales, "
+                    "escalerillas porta-conductores y bandejas de distribución en acero."
+                ),
+            },
+            {
+                "icon": "website/icons/network.svg",
+                "title": "Despliegue de redes internas",
+                "description": (
+                    "Diseño y tendido de cableado estructurado y fibra óptica de alta "
+                    "capacidad hacia cada departamento o vivienda, asegurando el libre "
+                    "acceso de múltiples operadores."
+                ),
+            },
+            {
+                "icon": "website/icons/badge.svg",
+                "title": "Certificación y gestión",
+                "description": (
+                    "Pruebas de conectividad y mediciones técnicas, tramitación y obtención "
+                    "del Informe Favorable de Telecomunicaciones ante la municipalidad."
+                ),
+            },
+        ],
+    },
+    "ccdd": {
+        "title": "Corrientes Débiles y Seguridad (CCDD)",
+        "eyebrow": "Tecnología, conectividad y seguridad avanzada",
+        "hero_image": "img/gallery/pintura-4.jpg",
+        "intro": [
+            "Dotamos a sus proyectos inmobiliarios de la inteligencia, automatización y "
+            "protección que el mercado residencial y corporativo exige en la actualidad.",
+            "Diseñamos e implementamos sistemas integrales que aseguran la continuidad "
+            "operacional y el control total de los recintos.",
+        ],
+        "steps": [
+            {
+                "icon": "website/icons/shield.svg",
+                "title": "Seguridad electrónica y control de acceso",
+                "description": (
+                    "CCTV con cámaras IP de alta definición y monitoreo centralizado, "
+                    "control de acceso peatonal y vehicular automatizado, citofonía "
+                    "digital y videoporteros."
+                ),
+            },
+            {
+                "icon": "website/icons/alert.svg",
+                "title": "Prevención de incendios",
+                "description": (
+                    "Redes de detección temprana de humo y calor mediante paneles "
+                    "centralizados inteligentes, cumpliendo rigurosamente con la "
+                    "normativa vigente."
+                ),
+            },
+            {
+                "icon": "website/icons/network.svg",
+                "title": "Conectividad y redes de datos",
+                "description": (
+                    "Iluminación WiFi de alta velocidad para áreas comunes, quinchos y "
+                    "zonas de cowork; infraestructura de networking y telefonía IP de "
+                    "estándar corporativo."
+                ),
+            },
+        ],
+    },
+}
 
 # Fallback static images, used only if nothing has been uploaded yet for that slot.
 FALLBACK_STATIC = {
@@ -76,6 +162,13 @@ FALLBACK_STATIC = {
     "build_remodel": "img/gallery/remodelaciones-1.jpg",
     "build_quote": "img/gallery/pavimentos-1.jpg",
 }
+
+
+def service_detail(request, slug):
+    detail = SERVICE_DETAILS.get(slug)
+    if detail is None:
+        raise Http404("Servicio no encontrado")
+    return render(request, "website/service_detail.html", {"service": detail})
 
 
 def _singleton_image(placement):

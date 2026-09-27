@@ -339,6 +339,40 @@ img { max-width: 100%; display: block; }
 .service-icon svg { width: 26px; height: 26px; }
 .service-card h3 { font-size: 1.08rem; margin-bottom: 10px; }
 .service-card p { color: var(--text-light); font-size: 0.92rem; margin: 0; }
+.service-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.service-link:hover { color: var(--ink-hover); }
+.service-link span { transition: transform 0.2s ease; }
+.service-link:hover span { transform: translateX(4px); }
+
+/* Service detail page */
+.hero-page { min-height: 320px; display: flex; align-items: flex-end; padding-bottom: 0; }
+.hero-page-inner { padding: 140px 24px 48px; max-width: 900px; }
+.hero-page h1 { margin: 0; }
+.breadcrumb {
+  font-size: 0.85rem;
+  color: var(--text-on-dark-soft);
+  margin-bottom: 14px;
+}
+.breadcrumb a { color: var(--text-on-dark-soft); }
+.breadcrumb a:hover { color: #fff; }
+.breadcrumb span { margin: 0 8px; }
+.service-detail-intro { max-width: 760px; }
+.service-detail-intro .section-lead { margin-bottom: 16px; }
+.service-detail-intro .section-lead:last-child { margin-bottom: 0; }
+.service-cta-inner { text-align: center; }
+.service-cta-inner h2 { color: #fff; margin-bottom: 10px; }
+.service-cta-inner p { color: var(--text-on-dark-soft); margin-bottom: 28px; }
 
 /* Values tabs */
 .values-tabs {

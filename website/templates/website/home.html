@@ -192,6 +192,9 @@
           <div class="service-icon">{% include service.icon %}</div>
           <h3>{{ service.title }}</h3>
           <p>{{ service.description }}</p>
+          {% if service.slug %}
+          <a href="{% url 'service_detail' service.slug %}" class="service-link">Ver más <span aria-hidden="true">&rarr;</span></a>
+          {% endif %}
         </article>
         {% endfor %}
       </div>
