@@ -281,7 +281,7 @@ img { max-width: 100%; display: block; }
 }
 
 /* ---------- Sections ---------- */
-.section { padding: 90px 0; }
+.section { padding: 90px 0; scroll-margin-top: 80px; }
 .section-dark { background: var(--dark); color: var(--text-on-dark); }
 .section-soft { background: var(--bg-soft); }
 .section-eyebrow {
@@ -355,24 +355,30 @@ img { max-width: 100%; display: block; }
 .service-link span { transition: transform 0.2s ease; }
 .service-link:hover span { transform: translateX(4px); }
 
-/* Service detail page */
-.hero-page { min-height: 320px; display: flex; align-items: flex-end; padding-bottom: 0; }
-.hero-page-inner { padding: 140px 24px 48px; max-width: 900px; }
-.hero-page h1 { margin: 0; }
-.breadcrumb {
-  font-size: 0.85rem;
-  color: var(--text-on-dark-soft);
-  margin-bottom: 14px;
+/* Featured service sections (Ley de Ductos / CCDD) */
+.detail-banner {
+  position: relative;
+  min-height: 240px;
+  display: flex;
+  align-items: flex-end;
+  background-size: cover;
+  background-position: center;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 32px;
 }
-.breadcrumb a { color: var(--text-on-dark-soft); }
-.breadcrumb a:hover { color: #fff; }
-.breadcrumb span { margin: 0 8px; }
+.detail-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(20,18,16,0.92) 0%, rgba(20,18,16,0.55) 55%, rgba(20,18,16,0.2) 100%);
+}
+.detail-banner-inner { position: relative; padding: 32px 36px; }
+.detail-banner-inner .eyebrow { color: var(--cream); margin-bottom: 10px; }
+.detail-banner-inner h2 { color: #fff; margin: 0; font-size: clamp(1.5rem, 4vw, 2.1rem); }
 .service-detail-intro { max-width: 760px; }
 .service-detail-intro .section-lead { margin-bottom: 16px; }
 .service-detail-intro .section-lead:last-child { margin-bottom: 0; }
-.service-cta-inner { text-align: center; }
-.service-cta-inner h2 { color: #fff; margin-bottom: 10px; }
-.service-cta-inner p { color: var(--text-on-dark-soft); margin-bottom: 28px; }
+.detail-steps-grid { margin-top: 32px; }
 
 /* Values tabs */
 .values-tabs {

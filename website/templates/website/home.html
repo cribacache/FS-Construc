@@ -193,13 +193,44 @@
           <h3>{{ service.title }}</h3>
           <p>{{ service.description }}</p>
           {% if service.slug %}
-          <a href="{% url 'service_detail' service.slug %}" class="service-link">Ver más <span aria-hidden="true">&rarr;</span></a>
+          <a href="#{{ service.slug }}" class="service-link">Ver más <span aria-hidden="true">&darr;</span></a>
           {% endif %}
         </article>
         {% endfor %}
       </div>
     </div>
   </section>
+
+  <!-- SERVICIOS DESTACADOS (Ley de Ductos / CCDD) -->
+  {% for slug, detail in service_details.items %}
+  <section id="{{ slug }}" class="section{% if forloop.counter|divisibleby:2 %} section-soft{% endif %}">
+    <div class="container">
+      <div class="detail-banner" style="background-image:url('{% static detail.hero_image %}')">
+        <div class="detail-banner-overlay" aria-hidden="true"></div>
+        <div class="detail-banner-inner">
+          <p class="eyebrow">{{ detail.eyebrow }}</p>
+          <h2>{{ detail.title }}</h2>
+        </div>
+      </div>
+
+      <div class="service-detail-intro">
+        {% for paragraph in detail.intro %}
+        <p class="section-lead">{{ paragraph }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="services-grid detail-steps-grid">
+        {% for step in detail.steps %}
+        <article class="service-card">
+          <div class="service-icon">{% include step.icon %}</div>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.description }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endfor %}
 
   <!-- PROCESO -->
   <section id="proceso" class="section section-soft">

@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -164,13 +163,6 @@ FALLBACK_STATIC = {
 }
 
 
-def service_detail(request, slug):
-    detail = SERVICE_DETAILS.get(slug)
-    if detail is None:
-        raise Http404("Servicio no encontrado")
-    return render(request, "website/service_detail.html", {"service": detail})
-
-
 def _singleton_image(placement):
     img = (
         GalleryImage.objects.filter(placement=placement, is_active=True)
@@ -205,6 +197,7 @@ def home(request):
     context = {
         "form": form,
         "services": SERVICES,
+        "service_details": SERVICE_DETAILS,
         "gallery": gallery_qs,
         "gallery_categories": gallery_categories,
         "hero_bg_url": _singleton_image("hero_bg"),
