@@ -1,5 +1,6 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
+from django.views.decorators.cache import never_cache
 
 from . import views
 
@@ -8,9 +9,11 @@ urlpatterns = [
     path("mis-fotos/", views.dashboard, name="dashboard"),
     path(
         "mis-fotos/login/",
-        auth_views.LoginView.as_view(
-            template_name="website/dashboard_login.html",
-            redirect_authenticated_user=True,
+        never_cache(
+            views.RateLimitedLoginView.as_view(
+                template_name="website/dashboard_login.html",
+                redirect_authenticated_user=True,
+            )
         ),
         name="dashboard_login",
     ),

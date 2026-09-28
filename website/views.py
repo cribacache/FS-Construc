@@ -1,10 +1,15 @@
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from .forms import ContactForm, GalleryImageEditForm, GalleryImageUploadForm
 from .models import GalleryImage
+from .ratelimit import get_client_ip, is_rate_limited
 
 SERVICES = [
     {
@@ -174,9 +179,24 @@ def _singleton_image(placement):
 
 def home(request):
     if request.method == "POST":
+        ip = get_client_ip(request)
+        if settings.RATE_LIMIT_ACTIVE and is_rate_limited(
+            f"contact:{ip}",
+            settings.RATE_LIMIT_CONTACT_MAX,
+            settings.RATE_LIMIT_CONTACT_WINDOW,
+        ):
+            messages.error(
+                request,
+                "Enviaste varios mensajes seguidos. Intenta de nuevo en un rato.",
+            )
+            return redirect("home")
+
         form = ContactForm(request.POST)
         if form.is_valid():
-            form.save()
+            if not form.is_spam():
+                form.save()
+            # Same confirmation either way, so a bot can't tell its
+            # submission was silently dropped.
             messages.success(
                 request,
                 "¡Gracias por tu mensaje! Te contactaremos a la brevedad.",
@@ -209,6 +229,25 @@ def home(request):
     return render(request, "website/home.html", context)
 
 
+class RateLimitedLoginView(auth_views.LoginView):
+    """Same login view, but blocks an IP that's hammering the form before
+    Django even validates the credentials."""
+
+    def post(self, request, *args, **kwargs):
+        ip = get_client_ip(request)
+        if settings.RATE_LIMIT_ACTIVE and is_rate_limited(
+            f"dashboard-login:{ip}",
+            settings.RATE_LIMIT_LOGIN_MAX,
+            settings.RATE_LIMIT_LOGIN_WINDOW,
+        ):
+            return HttpResponse(
+                "Demasiados intentos. Intenta de nuevo en unos minutos.",
+                status=429,
+            )
+        return super().post(request, *args, **kwargs)
+
+
+@never_cache
 @login_required(login_url="dashboard_login")
 def dashboard(request):
     if request.method == "POST":

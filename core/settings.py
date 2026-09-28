@@ -27,9 +27,10 @@ SECRET_KEY = os.environ.get(
 )
 
 # URL path for the admin site. Not linked from anywhere in the site, so it's
-# only reachable by typing it directly. Override with the DJANGO_ADMIN_URL
-# env var in production instead of hardcoding a secret path in source control.
-ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'panel-fs-9f21c7/')
+# only reachable by typing it directly. Always set DJANGO_ADMIN_URL in
+# production — the fallback below is a local-dev-only placeholder and must
+# never be the value actually deployed, since this file is public.
+ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'django-admin/')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
@@ -61,6 +62,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'website.middleware.SecurityHeadersMiddleware',
+    'website.middleware.AdminBruteForceMiddleware',
 ]
 
 # Cloud Run terminates TLS at the load balancer and forwards plain HTTP,
@@ -69,6 +72,36 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()
 ]
+
+# HTTPS / cookie hardening. Gated on DEBUG so local `runserver` (plain HTTP)
+# still works without extra setup.
+X_FRAME_OPTIONS = 'DENY'
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+# Opt-in, and starts small: raise DJANGO_HSTS_SECONDS once HTTPS is confirmed
+# stable on every domain pointed at this service (see the custom-domain
+# rollout), rather than defaulting to a long HSTS lifetime from day one.
+SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SECONDS', '0'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get('DJANGO_HSTS_SUBDOMAINS', 'False') == 'True'
+SECURE_HSTS_PRELOAD = os.environ.get('DJANGO_HSTS_PRELOAD', 'False') == 'True'
+
+# Rate limiting (login attempts, contact form) — shared DB cache below makes
+# this correct across gunicorn workers and Cloud Run instances.
+RATE_LIMIT_ACTIVE = os.environ.get('RATE_LIMIT_ACTIVE', 'True') == 'True'
+RATE_LIMIT_LOGIN_MAX = int(os.environ.get('RATE_LIMIT_LOGIN_MAX', '10'))
+RATE_LIMIT_LOGIN_WINDOW = int(os.environ.get('RATE_LIMIT_LOGIN_WINDOW', '300'))
+RATE_LIMIT_CONTACT_MAX = int(os.environ.get('RATE_LIMIT_CONTACT_MAX', '5'))
+RATE_LIMIT_CONTACT_WINDOW = int(os.environ.get('RATE_LIMIT_CONTACT_WINDOW', '3600'))
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache_table',
+    }
+}
 
 ROOT_URLCONF = 'core.urls'
 

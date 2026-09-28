@@ -22,6 +22,10 @@ class ContactForm(forms.ModelForm):
     service = forms.ChoiceField(
         label="Servicio de interés", choices=SERVICE_CHOICES, required=False
     )
+    # Honeypot: hidden from real visitors via CSS, so only bots fill it in.
+    # A non-empty value marks the submission as spam without tipping off
+    # the bot (the view still shows the normal "thanks" message).
+    website = forms.CharField(required=False, widget=forms.HiddenInput())
 
     class Meta:
         model = ContactMessage
@@ -35,6 +39,12 @@ class ContactForm(forms.ModelForm):
             ),
         }
 
+    def is_spam(self):
+        return bool(self.cleaned_data.get("website"))
+
+
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10 MB
+
 
 class GalleryImageUploadForm(forms.ModelForm):
     class Meta:
@@ -44,11 +54,14 @@ class GalleryImageUploadForm(forms.ModelForm):
             "title": forms.TextInput(attrs={"placeholder": "Ej: Fachada casa Vitacura"}),
         }
 
+    def clean_image(self):
+        image = self.cleaned_data["image"]
+        if image.size > MAX_UPLOAD_SIZE:
+            raise forms.ValidationError("La foto no puede pesar más de 10 MB.")
+        return image
+
 
 class GalleryImageEditForm(forms.ModelForm):
     class Meta:
         model = GalleryImage
         fields = ["title", "category", "placement", "is_active", "order"]
-        widgets = {
-            "order": forms.NumberInput(attrs={"style": "width:70px"}),
-        }
