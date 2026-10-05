@@ -88,6 +88,12 @@ SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SECONDS', '0'))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get('DJANGO_HSTS_SUBDOMAINS', 'False') == 'True'
 SECURE_HSTS_PRELOAD = os.environ.get('DJANGO_HSTS_PRELOAD', 'False') == 'True'
 
+# Number of reverse proxies in front of Django that append to X-Forwarded-For
+# (nginx on a VPS = 1). When set, the client IP is read from that many hops
+# from the right, so a client-supplied X-Forwarded-For can't spoof the rate
+# limiter. 0 keeps the legacy behavior (first entry), used on Cloud Run.
+TRUSTED_PROXY_HOPS = int(os.environ.get('DJANGO_TRUSTED_PROXY_HOPS', '0'))
+
 # Rate limiting (login attempts, contact form) — shared DB cache below makes
 # this correct across gunicorn workers and Cloud Run instances.
 RATE_LIMIT_ACTIVE = os.environ.get('RATE_LIMIT_ACTIVE', 'True') == 'True'
@@ -222,7 +228,9 @@ else:
         },
     }
     MEDIA_URL = 'media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
+    # On a VPS, point this outside the git checkout so `git pull` and
+    # redeploys never touch uploaded photos; nginx serves /media/ from it.
+    MEDIA_ROOT = Path(os.environ.get('DJANGO_MEDIA_ROOT', BASE_DIR / 'media'))
 
 
 # Email

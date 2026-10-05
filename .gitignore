@@ -11,3 +11,6 @@ staticfiles/
 *.log
 .vscode/
 .idea/
+
+# Data exported from production for the VPS migration (contact messages, password hashes)
+migration-export/

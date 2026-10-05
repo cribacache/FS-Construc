@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 
@@ -5,7 +6,13 @@ from django.utils import timezone
 def get_client_ip(request):
     forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+        hops = settings.TRUSTED_PROXY_HOPS
+        if hops > 0:
+            if len(parts) >= hops:
+                return parts[-hops]
+        elif parts:
+            return parts[0]
     return request.META.get("REMOTE_ADDR", "unknown")
 
 
