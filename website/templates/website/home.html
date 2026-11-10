@@ -8,11 +8,34 @@
       <img src="{% static 'img/logo/mark-white.png' %}" alt="FS Construcciones" class="logo-mark-img">
       <span class="logo-text">FS CONSTRUCCIONES<small>SPA</small></span>
     </a>
-    <nav class="main-nav">
-      <a href="#servicios">Servicios</a>
-      <a href="#nosotros">Nosotros</a>
-      <a href="#portafolio">Portafolio</a>
-      <a href="#contacto">Contacto</a>
+    <nav class="main-nav" aria-label="Principal">
+      <div class="nav-item">
+        <a href="#servicios" class="nav-link">Servicios <span class="nav-caret" aria-hidden="true"></span></a>
+        <div class="nav-dropdown">
+          {% for service in services %}
+          <a href="#{% if service.slug %}{{ service.slug }}{% else %}servicios{% endif %}">{{ service.title }}</a>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="nav-item">
+        <a href="#nosotros" class="nav-link">Nosotros <span class="nav-caret" aria-hidden="true"></span></a>
+        <div class="nav-dropdown">
+          <a href="#nosotros" data-values-tab="0">Garantía</a>
+          <a href="#nosotros" data-values-tab="1">Compromiso</a>
+          <a href="#nosotros" data-values-tab="2">Profesionalismo</a>
+          <a href="#nosotros" data-values-tab="3">Dedicación</a>
+          <a href="#proceso">Cómo trabajamos</a>
+        </div>
+      </div>
+      <div class="nav-item">
+        <a href="#portafolio" class="nav-link" data-gallery-filter="all">Portafolio <span class="nav-caret" aria-hidden="true"></span></a>
+        <div class="nav-dropdown">
+          <a href="#portafolio" data-gallery-filter="all">Todos</a>
+          {% for cat in gallery_categories %}
+          <a href="#portafolio" data-gallery-filter="{{ cat.slug }}">{{ cat.label }}</a>
+          {% endfor %}
+        </div>
+      </div>
     </nav>
     <a href="#contacto" class="btn btn-outline header-cta">Contáctanos</a>
   </div>

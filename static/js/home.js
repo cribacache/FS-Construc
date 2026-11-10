@@ -7,15 +7,42 @@
   var filters = document.querySelectorAll(".gallery-filter");
   var items = document.querySelectorAll(".gallery-item");
 
+  function applyFilter(filter) {
+    filters.forEach(function (b) {
+      b.classList.toggle("is-active", b.getAttribute("data-filter") === filter);
+    });
+    items.forEach(function (item) {
+      var show = filter === "all" || item.getAttribute("data-category") === filter;
+      item.hidden = !show;
+    });
+  }
+
   filters.forEach(function (btn) {
     btn.addEventListener("click", function () {
-      filters.forEach(function (b) { b.classList.remove("is-active"); });
-      btn.classList.add("is-active");
-      var filter = btn.getAttribute("data-filter");
-      items.forEach(function (item) {
-        var show = filter === "all" || item.getAttribute("data-category") === filter;
-        item.hidden = !show;
-      });
+      applyFilter(btn.getAttribute("data-filter"));
+    });
+  });
+
+  // Navbar: los items del menu desplegable aplican el filtro / pestaña y luego
+  // el ancla (#portafolio, #nosotros...) hace el scroll.
+  document.querySelectorAll("[data-gallery-filter]").forEach(function (link) {
+    link.addEventListener("click", function () {
+      applyFilter(link.getAttribute("data-gallery-filter"));
+    });
+  });
+  document.querySelectorAll("[data-values-tab]").forEach(function (link) {
+    link.addEventListener("click", function () {
+      var tab = document.querySelector('.values-tab[data-value="' + link.getAttribute("data-values-tab") + '"]');
+      if (tab) tab.click();
+    });
+  });
+  // Cierra el menu tras elegir (el hover lo mantendria abierto bajo el cursor).
+  document.querySelectorAll(".nav-dropdown a").forEach(function (link) {
+    link.addEventListener("click", function () {
+      var item = link.closest(".nav-item");
+      item.classList.add("is-closed");
+      if (document.activeElement) document.activeElement.blur();
+      item.addEventListener("mouseleave", function () { item.classList.remove("is-closed"); }, { once: true });
     });
   });
 
