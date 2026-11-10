@@ -1,5 +1,5 @@
 {% extends "website/base.html" %}
-{% load static %}
+{% load static site_text %}
 
 {% block extra_head %}
 {% if edit_mode %}
@@ -11,14 +11,23 @@
 {% block content %}
 {% if edit_mode %}
 <div class="edit-bar">
-  <strong>Modo edición</strong>
-  <span class="edit-status" id="editStatus">Las fotos se guardan al instante.</span>
+  <strong class="edit-title"><span aria-hidden="true">&#9998;</span> Modo edición</strong>
+  <span class="edit-chip" id="editChip">Sin cambios</span>
+  <span class="edit-status" id="editStatus"></span>
+  <button type="button" class="edit-btn" id="editDiscard">Descartar</button>
+  <button type="button" class="edit-btn edit-btn-pri" id="editSave">Guardar cambios</button>
   <a class="edit-btn" href="{% url 'home' %}" target="_blank" rel="noopener">Ver sitio</a>
-  <a class="edit-btn" href="{% url 'dashboard_list' %}">Vista de lista</a>
+  <a class="edit-btn" href="{% url 'dashboard_list' %}">Lista</a>
   <form method="post" action="{% url 'dashboard_logout' %}">
     {% csrf_token %}
-    <button type="submit" class="edit-btn edit-btn-pri">Salir</button>
+    <button type="submit" class="edit-btn">Salir</button>
   </form>
+</div>
+<div class="edit-legend">
+  <span class="lg-item"><i class="lg-sample lg-sample-edit" aria-hidden="true">Aa</i> <b>Editable:</b> haz clic en un texto con borde punteado azul para escribir, o usa los botones azules de las fotos.</span>
+  <span class="lg-item"><i class="lg-sample lg-sample-fixed" aria-hidden="true">Aa</i> <b>No editable:</b> lo que se ve apagado (menú, íconos, formulario, datos de contacto).</span>
+  <span class="lg-item lg-note">Las fotos se guardan al instante; los textos con «Guardar cambios».</span>
+  <label class="lg-toggle"><input type="checkbox" id="editHighlight" checked> Resaltar</label>
 </div>
 {% endif %}
 <header class="site-header">
@@ -32,17 +41,17 @@
         <a href="#servicios" class="nav-link">Servicios <span class="nav-caret" aria-hidden="true"></span></a>
         <div class="nav-dropdown">
           {% for service in services %}
-          <a href="#{% if service.slug %}{{ service.slug }}{% else %}servicios{% endif %}">{{ service.title }}</a>
+          <a href="#{% if service.slug %}{{ service.slug }}{% else %}servicios{% endif %}">{% et "svc" forloop.counter0 "title" ro %}{{ service.title }}{% endet %}</a>
           {% endfor %}
         </div>
       </div>
       <div class="nav-item">
         <a href="#nosotros" class="nav-link">Nosotros <span class="nav-caret" aria-hidden="true"></span></a>
         <div class="nav-dropdown">
-          <a href="#nosotros" data-values-tab="0">Garantía</a>
-          <a href="#nosotros" data-values-tab="1">Compromiso</a>
-          <a href="#nosotros" data-values-tab="2">Profesionalismo</a>
-          <a href="#nosotros" data-values-tab="3">Dedicación</a>
+          <a href="#nosotros" data-values-tab="0">{% et "values" 0 "title" ro %}Garantía{% endet %}</a>
+          <a href="#nosotros" data-values-tab="1">{% et "values" 1 "title" ro %}Compromiso{% endet %}</a>
+          <a href="#nosotros" data-values-tab="2">{% et "values" 2 "title" ro %}Profesionalismo{% endet %}</a>
+          <a href="#nosotros" data-values-tab="3">{% et "values" 3 "title" ro %}Dedicación{% endet %}</a>
           <a href="#proceso">Cómo trabajamos</a>
         </div>
       </div>
@@ -66,14 +75,14 @@
     <div class="hero-bg" data-bg="{% if hero_bg_url %}{{ hero_bg_url }}{% else %}{% static fallback_static.hero_bg %}{% endif %}" aria-hidden="true"></div>
     <div class="hero-overlay hero-overlay-center" aria-hidden="true"></div>
     <div class="container hero-inner">
-      <p class="eyebrow">Diseño &amp; Construcción a medida</p>
-      <h1>Diseñamos, remodelamos,<br>construimos</h1>
+      <p class="eyebrow">{% et "hero" "eyebrow" %}Diseño & Construcción a medida{% endet %}</p>
+      <h1>{% et "hero" "title" %}Diseñamos, remodelamos,<br>construimos{% endet %}</h1>
       <p class="hero-lead">
-        Especialistas en diseño, construcción, remodelaciones interiores y exteriores,
-        cocinas y muebles personalizados, pérgolas, pintura y pavimentos.
+        {% et "hero" "lead" %}Especialistas en diseño, construcción, remodelaciones interiores y exteriores,
+        cocinas y muebles personalizados, pérgolas, pintura y pavimentos.{% endet %}
       </p>
       <div class="hero-actions">
-        <a href="#contacto" class="btn btn-primary">Haz tu proyecto con nosotros</a>
+        <a href="#contacto" class="btn btn-primary">{% et "hero" "cta" %}Haz tu proyecto con nosotros{% endet %}</a>
       </div>
       <button type="button" class="hero-prompt" id="buildPromptBtn">
         ¿Qué quieres construir?
@@ -91,8 +100,8 @@
           <img src="{% if build_project_url %}{{ build_project_url }}{% else %}{% static fallback_static.build_project %}{% endif %}" alt="" loading="lazy">
         </div>
         <div class="build-option-body">
-          <h3>Un proyecto nuevo</h3>
-          <p>Diseñamos y construimos tu proyecto de principio a fin, adaptándonos a tus necesidades y tu presupuesto.</p>
+          <h3>{% et "build" "project" "title" %}Un proyecto nuevo{% endet %}</h3>
+          <p>{% et "build" "project" "description" %}Diseñamos y construimos tu proyecto de principio a fin, adaptándonos a tus necesidades y tu presupuesto.{% endet %}</p>
           <span class="build-option-cta">Ver proyectos<span aria-hidden="true">&rarr;</span></span>
         </div>
       </a>
@@ -101,8 +110,8 @@
           <img src="{% if build_remodel_url %}{{ build_remodel_url }}{% else %}{% static fallback_static.build_remodel %}{% endif %}" alt="" loading="lazy">
         </div>
         <div class="build-option-body">
-          <h3>Una remodelación</h3>
-          <p>Transformamos tus espacios actuales: cocinas, baños, terrazas y fachadas con terminaciones de primer nivel.</p>
+          <h3>{% et "build" "remodel" "title" %}Una remodelación{% endet %}</h3>
+          <p>{% et "build" "remodel" "description" %}Transformamos tus espacios actuales: cocinas, baños, terrazas y fachadas con terminaciones de primer nivel.{% endet %}</p>
           <span class="build-option-cta">Ver servicios <span aria-hidden="true">&rarr;</span></span>
         </div>
       </a>
@@ -111,8 +120,8 @@
           <img src="{% if build_quote_url %}{{ build_quote_url }}{% else %}{% static fallback_static.build_quote %}{% endif %}" alt="" loading="lazy">
         </div>
         <div class="build-option-body">
-          <h3>Una cotización</h3>
-          <p>Cuéntanos tu idea y te contactamos a la brevedad con una propuesta a medida, sin compromiso.</p>
+          <h3>{% et "build" "quote" "title" %}Una cotización{% endet %}</h3>
+          <p>{% et "build" "quote" "description" %}Cuéntanos tu idea y te contactamos a la brevedad con una propuesta a medida, sin compromiso.{% endet %}</p>
           <span class="build-option-cta">Contáctanos <span aria-hidden="true">&rarr;</span></span>
         </div>
       </a>
@@ -122,19 +131,19 @@
   <!-- SERVICIOS -->
   <section id="servicios" class="section">
     <div class="container">
-      <p class="section-eyebrow">Lo que hacemos</p>
-      <h2 class="section-title">Nuestros servicios</h2>
+      <p class="section-eyebrow">{% et "services" "eyebrow" %}Lo que hacemos{% endet %}</p>
+      <h2 class="section-title">{% et "services" "title" %}Nuestros servicios{% endet %}</h2>
       <p class="section-lead">
-        Adaptamos cada proyecto a tus necesidades, con altos estándares de calidad,
-        seguridad y funcionalidad.
+        {% et "services" "lead" %}Adaptamos cada proyecto a tus necesidades, con altos estándares de calidad,
+        seguridad y funcionalidad.{% endet %}
       </p>
 
       <div class="services-grid">
         {% for service in services %}
         <article class="service-card">
           <div class="service-icon">{% include service.icon %}</div>
-          <h3>{{ service.title }}</h3>
-          <p>{{ service.description }}</p>
+          <h3>{% et "svc" forloop.counter0 "title" %}{{ service.title }}{% endet %}</h3>
+          <p>{% et "svc" forloop.counter0 "description" %}{{ service.description }}{% endet %}</p>
           {% if service.slug %}
           <a href="#{{ service.slug }}" class="service-link">Ver más <span aria-hidden="true">&darr;</span></a>
           {% endif %}
@@ -145,20 +154,20 @@
   </section>
 
   <!-- SERVICIOS DESTACADOS (Ley de Ductos / CCDD) -->
-  {% for slug, detail in service_details.items %}
-  <section id="{{ slug }}" class="section{% if forloop.counter|divisibleby:2 %} section-soft{% endif %}">
+  {% for detail in details %}
+  <section id="{{ detail.slug }}" class="section{% if forloop.counter|divisibleby:2 %} section-soft{% endif %}">
     <div class="container">
-      <div class="detail-banner" data-bg="{% static detail.hero_image %}">
+      <div class="detail-banner" data-bg="{% if detail.bg_url %}{{ detail.bg_url }}{% else %}{% static detail.hero_image %}{% endif %}"{% if edit_mode %} data-slot="{{ detail.slot }}" data-photo-id="{{ detail.photo_id }}"{% endif %}>
         <div class="detail-banner-overlay" aria-hidden="true"></div>
         <div class="detail-banner-inner">
-          <p class="eyebrow">{{ detail.eyebrow }}</p>
-          <h2>{{ detail.title }}</h2>
+          <p class="eyebrow">{% et "det" detail.slug "eyebrow" %}{{ detail.eyebrow }}{% endet %}</p>
+          <h2>{% et "det" detail.slug "title" %}{{ detail.title }}{% endet %}</h2>
         </div>
       </div>
 
       <div class="service-detail-intro">
         {% for paragraph in detail.intro %}
-        <p class="section-lead">{{ paragraph }}</p>
+        <p class="section-lead">{% et "det" detail.slug "intro" forloop.counter0 %}{{ paragraph }}{% endet %}</p>
         {% endfor %}
       </div>
 
@@ -166,8 +175,8 @@
         {% for step in detail.steps %}
         <article class="service-card">
           <div class="service-icon">{% include step.icon %}</div>
-          <h3>{{ step.title }}</h3>
-          <p>{{ step.description }}</p>
+          <h3>{% et "det" detail.slug "step" forloop.counter0 "title" %}{{ step.title }}{% endet %}</h3>
+          <p>{% et "det" detail.slug "step" forloop.counter0 "description" %}{{ step.description }}{% endet %}</p>
         </article>
         {% endfor %}
       </div>
@@ -178,11 +187,11 @@
   <!-- INTRO / STATEMENT -->
   <section class="section intro-section section-soft">
     <div class="container intro-inner">
-      <h2 class="intro-title">Construimos y renovamos espacios pensados para durar.</h2>
+      <h2 class="intro-title">{% et "intro" "title" %}Construimos y renovamos espacios pensados para durar.{% endet %}</h2>
       <p class="intro-lead">
-        Nos dedicamos a conocer a fondo las necesidades y gustos de nuestros clientes
+        {% et "intro" "lead" %}Nos dedicamos a conocer a fondo las necesidades y gustos de nuestros clientes
         para entregarles un proyecto que combine funcionalidad, calidad y estilo, cuidando
-        cada detalle de principio a fin.
+        cada detalle de principio a fin.{% endet %}
       </p>
       <a href="#portafolio" class="btn btn-outline">Ver proyectos</a>
     </div>
@@ -191,49 +200,49 @@
   <!-- NOSOTROS / VALORES -->
   <section id="nosotros" class="section section-dark">
     <div class="container">
-      <p class="section-eyebrow section-eyebrow-light">Por qué elegirnos</p>
-      <h2 class="section-title section-title-light">Compromiso en cada detalle</h2>
+      <p class="section-eyebrow section-eyebrow-light">{% et "about" "eyebrow" %}Por qué elegirnos{% endet %}</p>
+      <h2 class="section-title section-title-light">{% et "about" "title" %}Compromiso en cada detalle{% endet %}</h2>
       <p class="section-lead section-lead-light">
-        Transformamos ideas en espacios funcionales, duraderos y con terminaciones de
-        primer nivel.
+        {% et "about" "lead" %}Transformamos ideas en espacios funcionales, duraderos y con terminaciones de
+        primer nivel.{% endet %}
       </p>
 
       <div class="values-tabs">
         <div class="values-tab-list" role="tablist">
           <button type="button" class="values-tab is-active" data-value="0" role="tab" aria-selected="true">
-            <span class="values-tab-num">01</span> Garantía
+            <span class="values-tab-num">01</span> {% et "values" 0 "title" ro %}Garantía{% endet %}
           </button>
           <button type="button" class="values-tab" data-value="1" role="tab" aria-selected="false">
-            <span class="values-tab-num">02</span> Compromiso
+            <span class="values-tab-num">02</span> {% et "values" 1 "title" ro %}Compromiso{% endet %}
           </button>
           <button type="button" class="values-tab" data-value="2" role="tab" aria-selected="false">
-            <span class="values-tab-num">03</span> Profesionalismo
+            <span class="values-tab-num">03</span> {% et "values" 2 "title" ro %}Profesionalismo{% endet %}
           </button>
           <button type="button" class="values-tab" data-value="3" role="tab" aria-selected="false">
-            <span class="values-tab-num">04</span> Dedicación
+            <span class="values-tab-num">04</span> {% et "values" 3 "title" ro %}Dedicación{% endet %}
           </button>
         </div>
 
         <div class="values-tab-panel">
           <div class="values-tab-panel-item is-active" data-value="0">
             <div class="value-icon">{% include "website/icons/shield.svg" %}</div>
-            <h3>Garantía</h3>
-            <p>Respaldamos cada trabajo con materiales de calidad y mano de obra certificada.</p>
+            <h3>{% et "values" 0 "title" %}Garantía{% endet %}</h3>
+            <p>{% et "values" 0 "description" %}Respaldamos cada trabajo con materiales de calidad y mano de obra certificada.{% endet %}</p>
           </div>
           <div class="values-tab-panel-item" data-value="1">
             <div class="value-icon">{% include "website/icons/handshake.svg" %}</div>
-            <h3>Compromiso</h3>
-            <p>Cumplimos plazos y acuerdos, manteniéndote informado en cada etapa.</p>
+            <h3>{% et "values" 1 "title" %}Compromiso{% endet %}</h3>
+            <p>{% et "values" 1 "description" %}Cumplimos plazos y acuerdos, manteniéndote informado en cada etapa.{% endet %}</p>
           </div>
           <div class="values-tab-panel-item" data-value="2">
             <div class="value-icon">{% include "website/icons/badge.svg" %}</div>
-            <h3>Profesionalismo</h3>
-            <p>Equipo técnico especializado en diseño, construcción y remodelación.</p>
+            <h3>{% et "values" 2 "title" %}Profesionalismo{% endet %}</h3>
+            <p>{% et "values" 2 "description" %}Equipo técnico especializado en diseño, construcción y remodelación.{% endet %}</p>
           </div>
           <div class="values-tab-panel-item" data-value="3">
             <div class="value-icon">{% include "website/icons/target.svg" %}</div>
-            <h3>Dedicación</h3>
-            <p>Personalizamos cada proyecto según tus gustos y necesidades reales.</p>
+            <h3>{% et "values" 3 "title" %}Dedicación{% endet %}</h3>
+            <p>{% et "values" 3 "description" %}Personalizamos cada proyecto según tus gustos y necesidades reales.{% endet %}</p>
           </div>
         </div>
       </div>
@@ -243,29 +252,29 @@
   <!-- PROCESO -->
   <section id="proceso" class="section section-soft">
     <div class="container">
-      <p class="section-eyebrow">Cómo trabajamos</p>
-      <h2 class="section-title">De la idea a la entrega</h2>
+      <p class="section-eyebrow">{% et "process" "eyebrow" %}Cómo trabajamos{% endet %}</p>
+      <h2 class="section-title">{% et "process" "title" %}De la idea a la entrega{% endet %}</h2>
 
       <div class="process-grid">
         <div class="process-step">
           <span class="process-number">01</span>
-          <h3>Contacto</h3>
-          <p>Nos cuentas tu proyecto a través del formulario, correo o WhatsApp.</p>
+          <h3>{% et "process" 0 "title" %}Contacto{% endet %}</h3>
+          <p>{% et "process" 0 "description" %}Nos cuentas tu proyecto a través del formulario, correo o WhatsApp.{% endet %}</p>
         </div>
         <div class="process-step">
           <span class="process-number">02</span>
-          <h3>Diseño y cotización</h3>
-          <p>Evaluamos el espacio y te entregamos una propuesta a medida.</p>
+          <h3>{% et "process" 1 "title" %}Diseño y cotización{% endet %}</h3>
+          <p>{% et "process" 1 "description" %}Evaluamos el espacio y te entregamos una propuesta a medida.{% endet %}</p>
         </div>
         <div class="process-step">
           <span class="process-number">03</span>
-          <h3>Construcción</h3>
-          <p>Ejecutamos con materiales de primera y técnicas avanzadas.</p>
+          <h3>{% et "process" 2 "title" %}Construcción{% endet %}</h3>
+          <p>{% et "process" 2 "description" %}Ejecutamos con materiales de primera y técnicas avanzadas.{% endet %}</p>
         </div>
         <div class="process-step">
           <span class="process-number">04</span>
-          <h3>Entrega</h3>
-          <p>Revisamos contigo cada detalle antes de la entrega final.</p>
+          <h3>{% et "process" 3 "title" %}Entrega{% endet %}</h3>
+          <p>{% et "process" 3 "description" %}Revisamos contigo cada detalle antes de la entrega final.{% endet %}</p>
         </div>
       </div>
     </div>
@@ -274,10 +283,10 @@
   <!-- PORTAFOLIO (justo antes de contacto) -->
   <section id="portafolio" class="section">
     <div class="container">
-      <p class="section-eyebrow">Nuestro trabajo</p>
-      <h2 class="section-title">Nuestros proyectos</h2>
+      <p class="section-eyebrow">{% et "projects" "eyebrow" %}Nuestro trabajo{% endet %}</p>
+      <h2 class="section-title">{% et "projects" "title" %}Nuestros proyectos{% endet %}</h2>
       <p class="section-lead">
-        Una muestra real de obras ejecutadas por FS Construcciones SPA.
+        {% et "projects" "lead" %}Una muestra real de obras ejecutadas por FS Construcciones SPA.{% endet %}
       </p>
 
       <div class="gallery-filters">
@@ -314,10 +323,10 @@
   <section id="contacto" class="section section-dark">
     <div class="container">
       <div class="contact-heading">
-        <p class="section-eyebrow section-eyebrow-light">Hablemos</p>
-        <h2 class="section-title section-title-light">¡Empecemos a construir juntos!</h2>
+        <p class="section-eyebrow section-eyebrow-light">{% et "contact" "eyebrow" %}Hablemos{% endet %}</p>
+        <h2 class="section-title section-title-light">{% et "contact" "title" %}¡Empecemos a construir juntos!{% endet %}</h2>
         <p class="section-lead section-lead-light contact-heading-lead">
-          Cuéntanos qué necesitas y te responderemos a la brevedad.
+          {% et "contact" "lead" %}Cuéntanos qué necesitas y te responderemos a la brevedad.{% endet %}
         </p>
       </div>
 

@@ -3,8 +3,12 @@
 
   var csrf = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
   var statusEl = document.getElementById("editStatus");
+  var chipEl = document.getElementById("editChip");
+  var saveBtn = document.getElementById("editSave");
+  var discardBtn = document.getElementById("editDiscard");
   var drag = null; // { type: "slot" | "tile", id, slot }
   var root = document.documentElement;
+  var DRAG_TYPE = "application/x-fs-photo";
 
   function setStatus(message, isError) {
     statusEl.textContent = message;
@@ -28,20 +32,6 @@
     });
   }
 
-  function run(label, promise, reload) {
-    setStatus(label + "…");
-    return promise.then(function () {
-      if (reload) {
-        setStatus("Guardado. Actualizando…");
-        window.location.reload();
-      } else {
-        setStatus("Guardado.");
-      }
-    }).catch(function (error) {
-      setStatus(error.message, true);
-    });
-  }
-
   function el(tag, className, text) {
     var node = document.createElement(tag);
     if (className) node.className = className;
@@ -57,12 +47,192 @@
     };
   }
 
+  // ---------- Texts ----------
+
+  var texts = Array.prototype.slice.call(document.querySelectorAll(".ed-text"));
+  var plainOnly = (function () {
+    var probe = document.createElement("div");
+    probe.setAttribute("contenteditable", "plaintext-only");
+    return probe.contentEditable === "plaintext-only";
+  })();
+
+  function readText(node) {
+    var raw = (node.innerText || node.textContent || "").replace(/\r/g, "");
+    var lines = raw.split("\n").map(function (line) { return line.replace(/\s+/g, " ").trim(); });
+    if (node.hasAttribute("data-multiline")) return lines.filter(Boolean).join("\n");
+    return lines.join(" ").replace(/\s+/g, " ").trim();
+  }
+
+  function writeText(node, value) {
+    node.textContent = "";
+    value.split("\n").forEach(function (line, index) {
+      if (index) node.appendChild(document.createElement("br"));
+      node.appendChild(document.createTextNode(line));
+    });
+  }
+
+  function syncCopies(node) {
+    var key = node.getAttribute("data-text-key");
+    var value = readText(node).replace(/\n/g, " ");
+    document.querySelectorAll('[data-text-sync="' + key + '"]').forEach(function (copy) {
+      copy.textContent = value;
+    });
+  }
+
+  function collectChanges() {
+    var changes = {};
+    texts.forEach(function (node) {
+      var value = readText(node);
+      if (value !== node._saved) {
+        changes[node.getAttribute("data-text-key")] = value === node.getAttribute("data-default") ? "" : value;
+      }
+    });
+    return changes;
+  }
+
+  function updateChip() {
+    var count = Object.keys(collectChanges()).length;
+    chipEl.textContent = count === 0 ? "Sin cambios" : count + (count === 1 ? " cambio sin guardar" : " cambios sin guardar");
+    chipEl.classList.toggle("is-dirty", count > 0);
+    return count;
+  }
+
+  function saveTexts() {
+    var changes = collectChanges();
+    if (!Object.keys(changes).length) return Promise.resolve(false);
+    return post("/mis-fotos/api/texts/", { changes: changes }).then(function () {
+      texts.forEach(function (node) { node._saved = readText(node); });
+      updateChip();
+      return true;
+    });
+  }
+
+  texts.forEach(function (node) {
+    node._saved = readText(node);
+    node.setAttribute("contenteditable", plainOnly ? "plaintext-only" : "true");
+    node.setAttribute("spellcheck", "true");
+    node.setAttribute("title", "Haz clic para editar este texto");
+    // A link would navigate instead of letting you place the cursor.
+    var link = node.closest("a[href]");
+    if (link) link.removeAttribute("href");
+
+    node.addEventListener("input", function () {
+      syncCopies(node);
+      updateChip();
+    });
+    node.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && !node.hasAttribute("data-multiline")) {
+        event.preventDefault();
+        node.blur();
+      } else if (event.key === "Escape") {
+        node.blur();
+      }
+    });
+    node.addEventListener("paste", function (event) {
+      event.preventDefault();
+      var pasted = (event.clipboardData || window.clipboardData).getData("text/plain");
+      if (!node.hasAttribute("data-multiline")) pasted = pasted.replace(/\s*\n\s*/g, " ");
+      document.execCommand("insertText", false, pasted);
+    });
+    // Never let a dragged photo (or file) be dropped into the text.
+    node.addEventListener("dragover", function (event) { if (drag) event.preventDefault(); });
+    node.addEventListener("drop", function (event) {
+      if (drag || (event.dataTransfer && event.dataTransfer.files.length)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    });
+    node.addEventListener("blur", function () {
+      if (!readText(node)) {
+        writeText(node, node.getAttribute("data-default"));
+        syncCopies(node);
+        updateChip();
+      }
+    });
+  });
+
+  saveBtn.addEventListener("click", function () {
+    setStatus("Guardando textos…");
+    saveTexts().then(function (saved) {
+      setStatus(saved ? "Textos guardados." : "No hay textos por guardar.");
+    }).catch(function (error) { setStatus(error.message, true); });
+  });
+
+  discardBtn.addEventListener("click", function () {
+    var count = updateChip();
+    if (!count) { setStatus("No hay cambios por descartar."); return; }
+    if (!window.confirm("¿Descartar los cambios de texto sin guardar?")) return;
+    texts.forEach(function (node) {
+      writeText(node, node._saved);
+      syncCopies(node);
+    });
+    updateChip();
+    setStatus("Cambios descartados.");
+  });
+
+  window.addEventListener("beforeunload", function (event) {
+    if (Object.keys(collectChanges()).length) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+  });
+
+  // Anything that reloads the page saves the pending texts first.
+  function run(label, task, reload) {
+    setStatus(label + "…");
+    return (reload ? saveTexts() : Promise.resolve()).then(task).then(function () {
+      if (reload) {
+        setStatus("Guardado. Actualizando…");
+        window.location.reload();
+      } else {
+        setStatus("Guardado.");
+      }
+    }).catch(function (error) {
+      setStatus(error.message, true);
+    });
+  }
+
+  // ---------- Fixed (not editable) parts ----------
+
+  [
+    [".site-header", "Menú: no editable", true],
+    [".contact-list", "Datos de contacto: no editables", true],
+    [".contact-form-wrap", "Formulario: no editable", true],
+    [".site-footer", "Pie de página: no editable", true],
+    [".gallery-footnote", "No editable", false],
+    [".contact-info .social-buttons", "No editable", false],
+    [".service-icon", "", false],
+    [".value-icon", "", false],
+    [".process-number", "", false],
+    [".values-tab-num", "", false],
+    [".build-option-cta", "", false],
+    [".service-link", "", false]
+  ].forEach(function (entry) {
+    document.querySelectorAll(entry[0]).forEach(function (node) {
+      node.classList.add("ed-fixed");
+      node.setAttribute("title", "Esta parte no se edita");
+      if (entry[2]) {
+        node.classList.add("ed-fixed-block");
+        node.setAttribute("data-ed-note", entry[1]);
+      }
+    });
+  });
+  document.querySelectorAll("[data-text-sync]").forEach(function (node) {
+    node.setAttribute("title", "Este texto se edita en su sección");
+  });
+
+  document.getElementById("editHighlight").addEventListener("change", function (event) {
+    root.classList.toggle("ed-hl-off", !event.target.checked);
+  });
+
+  // ---------- Photo drag & drop ----------
+
   function startDrag(event, payload, source) {
     drag = payload;
     root.classList.add("ed-dragging");
     source.classList.add("ed-source");
     event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", String(payload.id));
+    event.dataTransfer.setData(DRAG_TYPE, String(payload.id));
     event.dataTransfer.setDragImage(source, 20, 20);
   }
 
@@ -101,7 +271,7 @@
     });
   }
 
-  // ---------- Fixed photo slots (portada, panel "¿Qué quieres construir?") ----------
+  // ---------- Fixed photo slots (portada, panel, banners) ----------
 
   var slotFile = el("input");
   slotFile.type = "file";
@@ -113,9 +283,10 @@
   slotFile.addEventListener("change", function () {
     var file = slotFile.files[0];
     if (!file || !pendingSlot) return;
+    var slot = pendingSlot;
     var data = new FormData();
     data.append("image", file);
-    run("Subiendo foto", post("/mis-fotos/api/slot/" + pendingSlot + "/upload/", data), true);
+    run("Subiendo foto", function () { return post("/mis-fotos/api/slot/" + slot + "/upload/", data); }, true);
     slotFile.value = "";
   });
 
@@ -124,7 +295,7 @@
     var photoId = parseInt(slotEl.getAttribute("data-photo-id"), 10);
     var controls = el("div", "ed-ctl");
     if (photoId) controls.appendChild(makeGrip(function () { return { type: "slot", id: photoId, slot: slot }; }, slotEl));
-    var change = el("span", "ed-pill", photoId ? "Cambiar foto" : "Subir foto");
+    var change = el("span", "ed-pill", photoId ? "📷 Cambiar foto" : "📷 Subir foto");
     change.setAttribute("role", "button");
     change.addEventListener("click", stop(function () {
       pendingSlot = slot;
@@ -135,7 +306,9 @@
 
     dropTarget(slotEl, function (payload) {
       if (payload.type === "slot" && payload.slot === slot) return;
-      run("Moviendo foto", post("/mis-fotos/api/move/", { photo: payload.id, to_slot: slot }), true);
+      run("Moviendo foto", function () {
+        return post("/mis-fotos/api/move/", { photo: payload.id, to_slot: slot });
+      }, true);
     });
   });
 
@@ -166,7 +339,9 @@
     del.setAttribute("aria-label", "Eliminar foto");
     del.addEventListener("click", stop(function () {
       if (!window.confirm("¿Eliminar esta foto? No se puede deshacer.")) return;
-      run("Eliminando foto", post("/mis-fotos/api/photo/" + id + "/delete/"), false).then(function () {
+      run("Eliminando foto", function () {
+        return post("/mis-fotos/api/photo/" + id + "/delete/");
+      }, false).then(function () {
         if (!statusEl.classList.contains("is-error")) tile.remove();
       });
     }));
@@ -176,7 +351,9 @@
     dropTarget(tile, function (payload) {
       if (payload.id === id) return;
       if (payload.type === "slot") {
-        run("Moviendo foto", post("/mis-fotos/api/move/", { photo: payload.id, with: id }), true);
+        run("Moviendo foto", function () {
+          return post("/mis-fotos/api/move/", { photo: payload.id, with: id });
+        }, true);
         return;
       }
       var dragged = grid.querySelector('.gallery-item[data-id="' + payload.id + '"]');
@@ -187,7 +364,9 @@
       } else {
         tile.before(dragged);
       }
-      run("Guardando orden", post("/mis-fotos/api/gallery/reorder/", { ids: galleryIds() }), false);
+      run("Guardando orden", function () {
+        return post("/mis-fotos/api/gallery/reorder/", { ids: galleryIds() });
+      }, false);
     });
   });
 
@@ -242,7 +421,7 @@
     data.append("category", categorySelect.value);
     data.append("title", titleInput.value);
     dialog.close();
-    run("Subiendo foto", post("/mis-fotos/api/gallery/upload/", data), true);
+    run("Subiendo foto", function () { return post("/mis-fotos/api/gallery/upload/", data); }, true);
   });
 
   var addTile = el("button", "gallery-add");
@@ -252,11 +431,9 @@
   addTile.addEventListener("click", function () {
     var active = document.querySelector(".gallery-filter.is-active");
     var current = active ? active.getAttribute("data-filter") : "all";
-    if (current !== "all") categorySelect.value = current;
     form.reset();
     if (current !== "all") categorySelect.value = current;
     dialog.showModal();
   });
-  var more = document.getElementById("galleryMore");
-  grid.insertBefore(addTile, more);
+  grid.insertBefore(addTile, document.getElementById("galleryMore"));
 })();

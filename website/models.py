@@ -20,6 +20,8 @@ class GalleryImage(models.Model):
         ("build_project", 'Panel "¿Qué quieres construir?" — Un proyecto nuevo'),
         ("build_remodel", 'Panel "¿Qué quieres construir?" — Una remodelación'),
         ("build_quote", 'Panel "¿Qué quieres construir?" — Una cotización'),
+        ("detail_ley_ductos", "Banner de Ley de Ductos (RIT)"),
+        ("detail_ccdd", "Banner de Corrientes débiles (CCDD)"),
     ]
 
     image = models.ImageField("Foto", upload_to="gallery/")
@@ -60,3 +62,21 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.created_at:%d-%m-%Y %H:%M})"
+
+
+class SiteText(models.Model):
+    """A text of the home page that was edited from the visual editor.
+    Texts that were never edited have no row and show the default written
+    in the template."""
+
+    key = models.CharField("Clave", max_length=80, unique=True)
+    value = models.TextField("Texto")
+    updated_at = models.DateTimeField("Editado el", auto_now=True)
+
+    class Meta:
+        verbose_name = "Texto del sitio"
+        verbose_name_plural = "Textos del sitio"
+        ordering = ["key"]
+
+    def __str__(self):
+        return self.key

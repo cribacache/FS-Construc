@@ -169,3 +169,83 @@ class EditorApiTests(TestCase):
             {"image": SimpleUploadedFile("n.txt", b"hello", "text/plain"), "category": "pintura"},
         )
         self.assertEqual(response.status_code, 400)
+
+
+from .models import SiteText
+
+NO_MANIFEST = override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
+
+
+@NO_MANIFEST
+class EditableTextTests(TestCase):
+    def setUp(self):
+        get_user_model().objects.create_user("editor", password="pw-test-123")
+
+    def save(self, changes):
+        return self.client.post(
+            "/mis-fotos/api/texts/",
+            json.dumps({"changes": changes}),
+            content_type="application/json",
+        )
+
+    def login(self):
+        self.client.login(username="editor", password="pw-test-123")
+
+    def test_public_page_shows_defaults_without_editor_markup(self):
+        response = self.client.get("/")
+        self.assertContains(response, "Diseñamos, remodelamos,<br>construimos")
+        self.assertContains(response, "Diseño &amp; Construcción a medida")
+        self.assertNotContains(response, "data-text-key")
+        self.assertNotContains(response, "ed-text")
+
+    def test_texts_api_requires_login(self):
+        self.assertEqual(self.save({"hero.title": "x"}).status_code, 302)
+        self.assertEqual(SiteText.objects.count(), 0)
+
+    def test_saved_text_replaces_default_on_public_page_and_is_escaped(self):
+        self.login()
+        self.assertEqual(self.save({"hero.title": "Hola\nMundo <b>"}).status_code, 200)
+        page = self.client.get("/")
+        self.assertContains(page, "Hola<br>Mundo &lt;b&gt;")
+        self.assertNotContains(page, "Diseñamos, remodelamos,<br>construimos")
+
+    def test_empty_value_restores_default(self):
+        self.login()
+        self.save({"hero.eyebrow": "Otro texto"})
+        self.save({"hero.eyebrow": ""})
+        self.assertFalse(SiteText.objects.filter(key="hero.eyebrow").exists())
+        self.assertContains(self.client.get("/"), "Diseño &amp; Construcción a medida")
+
+    def test_repeated_items_have_their_own_keys(self):
+        self.login()
+        self.save({"svc.0.title": "Servicio uno editado", "det.ccdd.step.1.title": "Paso editado"})
+        page = self.client.get("/")
+        self.assertContains(page, "Servicio uno editado")
+        self.assertContains(page, "Paso editado")
+        self.assertContains(page, "Remodelaciones")  # svc.1 untouched
+
+    def test_editor_marks_texts_and_keeps_menus_in_sync(self):
+        self.login()
+        self.save({"svc.0.title": "Servicio uno editado"})
+        page = self.client.get("/mis-fotos/")
+        self.assertContains(page, 'data-text-key="svc.0.title"')
+        self.assertContains(page, 'data-text-sync="svc.0.title">Servicio uno editado')
+        self.assertContains(page, 'data-multiline="1"')  # hero title has a line break
+
+    def test_rejects_bad_keys_and_values(self):
+        self.login()
+        self.assertEqual(self.save({"bad key!": "x"}).status_code, 400)
+        self.assertEqual(self.save({"hero.title": "x" * 3001}).status_code, 400)
+        self.assertEqual(self.save({"hero.title": 5}).status_code, 400)
+        self.assertEqual(SiteText.objects.count(), 0)
+
+    def test_detail_banner_is_a_photo_slot(self):
+        self.login()
+        page = self.client.get("/mis-fotos/")
+        self.assertContains(page, 'data-slot="detail_ley_ductos"')
+        self.assertContains(page, 'data-slot="detail_ccdd"')

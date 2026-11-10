@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.conf import settings
 from django.contrib import messages
@@ -12,7 +13,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from .forms import ContactForm, GalleryImageEditForm, GalleryImageUploadForm
-from .models import GalleryImage
+from .models import GalleryImage, SiteText
 from .ratelimit import get_client_ip, is_rate_limited
 
 SERVICES = [
@@ -172,7 +173,15 @@ FALLBACK_STATIC = {
 }
 
 
-SLOT_NAMES = ("hero_bg", "build_project", "build_remodel", "build_quote")
+SLOT_NAMES = (
+    "hero_bg",
+    "build_project",
+    "build_remodel",
+    "build_quote",
+    "detail_ley_ductos",
+    "detail_ccdd",
+)
+DETAIL_SLOTS = {"ley-ductos": "detail_ley_ductos", "ccdd": "detail_ccdd"}
 
 
 def _current_slot_image(placement):
@@ -225,10 +234,23 @@ def _site_context(form, edit_mode=False):
     gallery_categories.sort(key=lambda c: c["label"])
 
     slot_images = {name: _current_slot_image(name) for name in SLOT_NAMES}
+    details = []
+    for slug, detail in SERVICE_DETAILS.items():
+        image = slot_images[DETAIL_SLOTS[slug]]
+        details.append(
+            {
+                **detail,
+                "slug": slug,
+                "slot": DETAIL_SLOTS[slug],
+                "photo_id": image.pk if image else "",
+                "bg_url": image.image.url if image else None,
+            }
+        )
     return {
         "form": form,
         "services": SERVICES,
-        "service_details": SERVICE_DETAILS,
+        "details": details,
+        "site_texts": dict(SiteText.objects.values_list("key", "value")),
         "gallery": gallery_qs,
         "gallery_categories": gallery_categories,
         "hero_bg_url": slot_images["hero_bg"].image.url if slot_images["hero_bg"] else None,
@@ -433,4 +455,32 @@ def api_photo_delete(request, pk):
     photo = get_object_or_404(GalleryImage, pk=pk)
     photo.image.delete(save=False)
     photo.delete()
+    return JsonResponse({"ok": True})
+
+
+TEXT_KEY_RE = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
+MAX_TEXT_LENGTH = 3000
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def api_texts_save(request):
+    """Save edited texts. An empty value restores the original text."""
+    changes = _json_body(request).get("changes")
+    if not isinstance(changes, dict) or len(changes) > 300:
+        return _json_error("Cambios inválidos.")
+    cleaned = {}
+    for key, value in changes.items():
+        if not isinstance(key, str) or not TEXT_KEY_RE.match(key) or not isinstance(value, str):
+            return _json_error("Cambios inválidos.")
+        value = value.replace("\r", "").strip()
+        if len(value) > MAX_TEXT_LENGTH:
+            return _json_error("Uno de los textos es demasiado largo.")
+        cleaned[key] = value
+    with transaction.atomic():
+        for key, value in cleaned.items():
+            if value:
+                SiteText.objects.update_or_create(key=key, defaults={"value": value})
+            else:
+                SiteText.objects.filter(key=key).delete()
     return JsonResponse({"ok": True})

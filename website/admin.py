@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import ContactMessage, GalleryImage
+from .models import ContactMessage, GalleryImage, SiteText
 
 
 @admin.register(GalleryImage)
@@ -38,3 +38,9 @@ class ContactMessageAdmin(admin.ModelAdmin):
     list_filter = ("service", "created_at")
     search_fields = ("name", "email", "phone", "message")
     readonly_fields = ("created_at",)
+
+
+@admin.register(SiteText)
+class SiteTextAdmin(admin.ModelAdmin):
+    list_display = ("key", "value", "updated_at")
+    search_fields = ("key", "value")

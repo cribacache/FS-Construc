@@ -26,6 +26,7 @@ urlpatterns = [
     path("mis-fotos/api/slot/<slug:slot>/upload/", views.api_slot_upload, name="api_slot_upload"),
     path("mis-fotos/api/gallery/upload/", views.api_gallery_upload, name="api_gallery_upload"),
     path("mis-fotos/api/gallery/reorder/", views.api_gallery_reorder, name="api_gallery_reorder"),
+    path("mis-fotos/api/texts/", views.api_texts_save, name="api_texts_save"),
     path("mis-fotos/api/move/", views.api_move, name="api_move"),
     path("mis-fotos/api/photo/<int:pk>/delete/", views.api_photo_delete, name="api_photo_delete"),
     path("mis-fotos/<int:pk>/actualizar/", views.dashboard_update, name="dashboard_update"),
