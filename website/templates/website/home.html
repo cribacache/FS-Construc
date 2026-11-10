@@ -1,7 +1,26 @@
 {% extends "website/base.html" %}
 {% load static %}
 
+{% block extra_head %}
+{% if edit_mode %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" href="{% static 'css/editor.css' %}">
+{% endif %}
+{% endblock %}
+
 {% block content %}
+{% if edit_mode %}
+<div class="edit-bar">
+  <strong>Modo edición</strong>
+  <span class="edit-status" id="editStatus">Las fotos se guardan al instante.</span>
+  <a class="edit-btn" href="{% url 'home' %}" target="_blank" rel="noopener">Ver sitio</a>
+  <a class="edit-btn" href="{% url 'dashboard_list' %}">Vista de lista</a>
+  <form method="post" action="{% url 'dashboard_logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="edit-btn edit-btn-pri">Salir</button>
+  </form>
+</div>
+{% endif %}
 <header class="site-header">
   <div class="container header-inner">
     <a href="#inicio" class="logo">
@@ -43,7 +62,7 @@
 
 <main>
   <!-- HERO -->
-  <section id="inicio" class="hero hero-center">
+  <section id="inicio" class="hero hero-center"{% if edit_mode %} data-slot="hero_bg" data-photo-id="{{ slot_ids.hero_bg }}"{% endif %}>
     <div class="hero-bg" data-bg="{% if hero_bg_url %}{{ hero_bg_url }}{% else %}{% static fallback_static.hero_bg %}{% endif %}" aria-hidden="true"></div>
     <div class="hero-overlay hero-overlay-center" aria-hidden="true"></div>
     <div class="container hero-inner">
@@ -64,11 +83,11 @@
   </section>
 
   <!-- BUILD PANEL (qué quieres construir) -->
-  <div class="build-panel" id="buildPanel" hidden>
+  <div class="build-panel" id="buildPanel"{% if not edit_mode %} hidden{% endif %}>
     <button type="button" class="build-panel-close" id="buildPanelClose" aria-label="Cerrar">&times;</button>
     <div class="build-panel-inner">
       <a href="#portafolio" class="build-option">
-        <div class="build-option-media">
+        <div class="build-option-media"{% if edit_mode %} data-slot="build_project" data-photo-id="{{ slot_ids.build_project }}"{% endif %}>
           <img src="{% if build_project_url %}{{ build_project_url }}{% else %}{% static fallback_static.build_project %}{% endif %}" alt="" loading="lazy">
         </div>
         <div class="build-option-body">
@@ -78,7 +97,7 @@
         </div>
       </a>
       <a href="#servicios" class="build-option">
-        <div class="build-option-media">
+        <div class="build-option-media"{% if edit_mode %} data-slot="build_remodel" data-photo-id="{{ slot_ids.build_remodel }}"{% endif %}>
           <img src="{% if build_remodel_url %}{{ build_remodel_url }}{% else %}{% static fallback_static.build_remodel %}{% endif %}" alt="" loading="lazy">
         </div>
         <div class="build-option-body">
@@ -88,7 +107,7 @@
         </div>
       </a>
       <a href="#contacto" class="build-option">
-        <div class="build-option-media">
+        <div class="build-option-media"{% if edit_mode %} data-slot="build_quote" data-photo-id="{{ slot_ids.build_quote }}"{% endif %}>
           <img src="{% if build_quote_url %}{{ build_quote_url }}{% else %}{% static fallback_static.build_quote %}{% endif %}" alt="" loading="lazy">
         </div>
         <div class="build-option-body">
@@ -270,7 +289,7 @@
 
       <div class="gallery-grid">
         {% for item in gallery %}
-        <button type="button" class="gallery-item" data-category="{{ item.category }}" data-full="{{ item.image.url }}">
+        <button type="button" class="gallery-item" data-id="{{ item.pk }}" data-category="{{ item.category }}" data-full="{{ item.image.url }}">
           <img src="{{ item.image.url }}" alt="{{ item.title }}" loading="lazy">
           <span class="gallery-item-label">{{ item.title }}</span>
         </button>
@@ -412,4 +431,5 @@
 </footer>
 
 <script src="{% static 'js/home.js' %}"></script>
+{% if edit_mode %}<script src="{% static 'js/editor.js' %}"></script>{% endif %}
 {% endblock %}

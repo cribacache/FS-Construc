@@ -7,7 +7,8 @@
   var filters = document.querySelectorAll(".gallery-filter");
   var items = document.querySelectorAll(".gallery-item");
 
-  var GALLERY_PREVIEW = 5;
+  var EDIT_MODE = document.documentElement.hasAttribute("data-edit");
+  var GALLERY_PREVIEW = EDIT_MODE ? Infinity : 5;
   var moreBtn = document.getElementById("galleryMore");
   var currentFilter = "all";
   var expanded = false;
@@ -103,7 +104,7 @@
   var buildPanel = document.getElementById("buildPanel");
   var buildPanelClose = document.getElementById("buildPanelClose");
 
-  function closeBuildPanel() { buildPanel.hidden = true; }
+  function closeBuildPanel() { if (!EDIT_MODE) buildPanel.hidden = true; }
   buildPromptBtn.addEventListener("click", function () { buildPanel.hidden = false; });
   buildPanelClose.addEventListener("click", closeBuildPanel);
   buildPanel.addEventListener("click", function (e) {

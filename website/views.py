@@ -1,8 +1,12 @@
+import json
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.db import transaction
+from django.db.models import Max
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
@@ -168,13 +172,15 @@ FALLBACK_STATIC = {
 }
 
 
-def _singleton_image(placement):
-    img = (
+SLOT_NAMES = ("hero_bg", "build_project", "build_remodel", "build_quote")
+
+
+def _current_slot_image(placement):
+    return (
         GalleryImage.objects.filter(placement=placement, is_active=True)
         .order_by("-created_at")
         .first()
     )
-    return img.image.url if img else None
 
 
 def home(request):
@@ -205,6 +211,10 @@ def home(request):
     else:
         form = ContactForm()
 
+    return render(request, "website/home.html", _site_context(form))
+
+
+def _site_context(form, edit_mode=False):
     gallery_qs = GalleryImage.objects.filter(placement="gallery", is_active=True)
     category_labels = dict(GalleryImage.CATEGORY_CHOICES)
     gallery_categories = [
@@ -214,19 +224,22 @@ def home(request):
     ]
     gallery_categories.sort(key=lambda c: c["label"])
 
-    context = {
+    slot_images = {name: _current_slot_image(name) for name in SLOT_NAMES}
+    return {
         "form": form,
         "services": SERVICES,
         "service_details": SERVICE_DETAILS,
         "gallery": gallery_qs,
         "gallery_categories": gallery_categories,
-        "hero_bg_url": _singleton_image("hero_bg"),
-        "build_project_url": _singleton_image("build_project"),
-        "build_remodel_url": _singleton_image("build_remodel"),
-        "build_quote_url": _singleton_image("build_quote"),
+        "hero_bg_url": slot_images["hero_bg"].image.url if slot_images["hero_bg"] else None,
+        "build_project_url": slot_images["build_project"].image.url if slot_images["build_project"] else None,
+        "build_remodel_url": slot_images["build_remodel"].image.url if slot_images["build_remodel"] else None,
+        "build_quote_url": slot_images["build_quote"].image.url if slot_images["build_quote"] else None,
         "fallback_static": FALLBACK_STATIC,
+        "edit_mode": edit_mode,
+        "slot_ids": {name: (img.pk if img else "") for name, img in slot_images.items()},
+        "category_choices": GalleryImage.CATEGORY_CHOICES,
     }
-    return render(request, "website/home.html", context)
 
 
 class RateLimitedLoginView(auth_views.LoginView):
@@ -250,12 +263,20 @@ class RateLimitedLoginView(auth_views.LoginView):
 @never_cache
 @login_required(login_url="dashboard_login")
 def dashboard(request):
+    """Visual editor: the real home page rendered in edit mode."""
+    return render(request, "website/home.html", _site_context(ContactForm(), edit_mode=True))
+
+
+@never_cache
+@login_required(login_url="dashboard_login")
+def dashboard_list(request):
+    """Original list-style photo manager (title, category, hide, order)."""
     if request.method == "POST":
         upload_form = GalleryImageUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
             upload_form.save()
             messages.success(request, "¡Foto subida con éxito!")
-            return redirect("dashboard")
+            return redirect("dashboard_list")
     else:
         upload_form = GalleryImageUploadForm()
 
@@ -279,7 +300,7 @@ def dashboard_update(request, pk):
         messages.success(request, "Cambios guardados.")
     else:
         messages.error(request, "No se pudo guardar: revisa los datos.")
-    return redirect("dashboard")
+    return redirect("dashboard_list")
 
 
 @login_required(login_url="dashboard_login")
@@ -289,4 +310,127 @@ def dashboard_delete(request, pk):
     photo.image.delete(save=False)
     photo.delete()
     messages.success(request, "Foto eliminada.")
-    return redirect("dashboard")
+    return redirect("dashboard_list")
+
+
+# ---------- Visual editor: JSON API ----------
+
+def _json_error(message, status=400):
+    return JsonResponse({"ok": False, "error": message}, status=status)
+
+
+def _json_body(request):
+    try:
+        data = json.loads(request.body or b"{}")
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _form_error_message(form):
+    for errors in form.errors.values():
+        return errors[0]
+    return "No se pudo guardar la foto."
+
+
+def _make_current(slot, photo):
+    """A singleton slot shows exactly one photo: hide any other active one."""
+    GalleryImage.objects.filter(placement=slot, is_active=True).exclude(pk=photo.pk).update(
+        is_active=False
+    )
+
+
+def _swap(a, b):
+    a.placement, b.placement = b.placement, a.placement
+    a.order, b.order = b.order, a.order
+    a.save(update_fields=["placement", "order"])
+    b.save(update_fields=["placement", "order"])
+    for photo in (a, b):
+        if photo.placement in SLOT_NAMES:
+            _make_current(photo.placement, photo)
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def api_slot_upload(request, slot):
+    if slot not in SLOT_NAMES:
+        return _json_error("Ese espacio no existe.", 404)
+    data = request.POST.copy()
+    data["placement"] = slot
+    data.setdefault("category", "fachadas")
+    form = GalleryImageUploadForm(data, request.FILES)
+    if not form.is_valid():
+        return _json_error(_form_error_message(form))
+    with transaction.atomic():
+        photo = form.save()
+        _make_current(slot, photo)
+    return JsonResponse({"ok": True, "id": photo.pk})
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def api_gallery_upload(request):
+    data = request.POST.copy()
+    data["placement"] = "gallery"
+    form = GalleryImageUploadForm(data, request.FILES)
+    if not form.is_valid():
+        return _json_error(_form_error_message(form))
+    last = GalleryImage.objects.filter(placement="gallery").aggregate(Max("order"))["order__max"]
+    photo = form.save(commit=False)
+    photo.order = 0 if last is None else last + 1
+    photo.save()
+    return JsonResponse({"ok": True, "id": photo.pk})
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def api_move(request):
+    data = _json_body(request)
+    photo = GalleryImage.objects.filter(pk=data.get("photo"), is_active=True).first()
+    if photo is None:
+        return _json_error("No encontré esa foto.", 404)
+
+    with transaction.atomic():
+        if "to_slot" in data:
+            slot = data["to_slot"]
+            if slot not in SLOT_NAMES:
+                return _json_error("Ese espacio no existe.", 404)
+            current = _current_slot_image(slot)
+            if current is not None and current.pk == photo.pk:
+                return JsonResponse({"ok": True})
+            if current is not None:
+                _swap(photo, current)
+            else:
+                photo.placement = slot
+                photo.save(update_fields=["placement"])
+                _make_current(slot, photo)
+        elif "with" in data:
+            other = GalleryImage.objects.filter(pk=data.get("with"), is_active=True).first()
+            if other is None:
+                return _json_error("No encontré esa foto.", 404)
+            if other.pk != photo.pk:
+                _swap(photo, other)
+        else:
+            return _json_error("Falta el destino.")
+    return JsonResponse({"ok": True})
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def api_gallery_reorder(request):
+    ids = _json_body(request).get("ids")
+    if not isinstance(ids, list) or not all(isinstance(i, int) for i in ids):
+        return _json_error("Orden inválido.")
+    with transaction.atomic():
+        for index, pk in enumerate(ids):
+            GalleryImage.objects.filter(pk=pk, placement="gallery").update(order=index)
+    return JsonResponse({"ok": True})
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def api_photo_delete(request, pk):
+    photo = get_object_or_404(GalleryImage, pk=pk)
+    photo.image.delete(save=False)
+    photo.delete()
+    return JsonResponse({"ok": True})

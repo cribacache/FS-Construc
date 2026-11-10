@@ -1,0 +1,135 @@
+/* Visual editor (/mis-fotos/): the real home page plus editing controls. */
+html[data-edit] body { padding-top: 48px; }
+html[data-edit] .site-header { top: 48px; }
+html[data-edit] .section { scroll-margin-top: 130px; }
+
+.edit-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 48px;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  background: #111;
+  color: #fff;
+  font-size: 0.88rem;
+}
+.edit-bar form { margin: 0; }
+.edit-status { flex: 1; color: var(--text-on-dark-soft); }
+.edit-status.is-error { color: #ff9b8f; }
+.edit-btn {
+  display: inline-block;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.edit-btn:hover { background: rgba(255, 255, 255, 0.12); }
+.edit-btn-pri { background: #fff; color: #111; border-color: #fff; }
+.edit-btn-pri:hover { background: #eee; }
+
+/* The "¿Qué quieres construir?" overlay is shown inline so its photos can be edited. */
+html[data-edit] .build-panel {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  padding: 60px 24px;
+}
+html[data-edit] .build-panel-close,
+html[data-edit] .hero-prompt { display: none; }
+html[data-edit] .contact-form-wrap { pointer-events: none; opacity: 0.75; }
+
+/* Photo controls */
+[data-slot] { position: relative; }
+.ed-ctl {
+  position: absolute;
+  z-index: 40;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+[data-slot]:hover > .ed-ctl,
+.gallery-item:hover > .ed-ctl,
+.ed-ctl:focus-within { opacity: 1; }
+.gallery-item .ed-ctl { left: 8px; right: 8px; justify-content: space-between; }
+.hero[data-slot] > .ed-ctl { top: 24px; right: 24px; }
+.ed-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.78);
+  color: #fff;
+  font-family: var(--font-heading, inherit);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+}
+.ed-pill:hover { background: #000; }
+.ed-grip { cursor: grab; }
+.ed-del { font-size: 1rem; padding: 5px 11px; }
+.ed-del:hover { background: #b3261e; }
+
+/* Drag feedback: every valid drop target shows a dashed outline */
+html.ed-dragging [data-slot],
+html.ed-dragging .gallery-item { outline: 2px dashed var(--ink); outline-offset: -3px; }
+html.ed-dragging .ed-source { opacity: 0.45; }
+html.ed-dragging .ed-over { outline: 4px solid var(--ink); outline-offset: -4px; }
+html.ed-dragging .ed-ctl { opacity: 0; }
+
+/* "Agregar foto" tile */
+.gallery-add {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius);
+  border: 1.5px dashed var(--ink);
+  background: transparent;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.gallery-add:hover { background: var(--ink); color: #fff; }
+.gallery-add-icon { font-size: 2rem; line-height: 1; }
+.gallery-add-title { font-size: 1rem; font-weight: 600; }
+
+/* Add-photo dialog */
+.ed-dialog {
+  border: none;
+  border-radius: 14px;
+  padding: 0;
+  width: min(440px, 92vw);
+  color: var(--text, #222);
+}
+.ed-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+.ed-form { display: flex; flex-direction: column; gap: 14px; padding: 24px; }
+.ed-form h3 { margin: 0; }
+.ed-field { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600; }
+.ed-field input,
+.ed-field select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-weight: 400;
+}
+.ed-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+.ed-form .edit-btn { border-color: var(--border); color: #222; }
+.ed-form .edit-btn-pri { background: var(--ink); border-color: var(--ink); color: #fff; }
+.ed-form .edit-btn-pri:hover { background: var(--ink-hover); }
