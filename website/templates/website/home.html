@@ -28,7 +28,7 @@
         </div>
       </div>
       <div class="nav-item">
-        <a href="#portafolio" class="nav-link" data-gallery-filter="all">Portafolio <span class="nav-caret" aria-hidden="true"></span></a>
+        <a href="#portafolio" class="nav-link" data-gallery-filter="all">Proyectos <span class="nav-caret" aria-hidden="true"></span></a>
         <div class="nav-dropdown">
           <a href="#portafolio" data-gallery-filter="all">Todos</a>
           {% for cat in gallery_categories %}
@@ -74,7 +74,7 @@
         <div class="build-option-body">
           <h3>Un proyecto nuevo</h3>
           <p>Diseñamos y construimos tu proyecto de principio a fin, adaptándonos a tus necesidades y tu presupuesto.</p>
-          <span class="build-option-cta">Ver portafolio <span aria-hidden="true">&rarr;</span></span>
+          <span class="build-option-cta">Ver proyectos<span aria-hidden="true">&rarr;</span></span>
         </div>
       </a>
       <a href="#servicios" class="build-option">
@@ -165,7 +165,7 @@
         para entregarles un proyecto que combine funcionalidad, calidad y estilo, cuidando
         cada detalle de principio a fin.
       </p>
-      <a href="#portafolio" class="btn btn-outline">Ver portafolio</a>
+      <a href="#portafolio" class="btn btn-outline">Ver proyectos</a>
     </div>
   </section>
 
@@ -256,7 +256,7 @@
   <section id="portafolio" class="section">
     <div class="container">
       <p class="section-eyebrow">Nuestro trabajo</p>
-      <h2 class="section-title">Portafolio de proyectos</h2>
+      <h2 class="section-title">Nuestros proyectos</h2>
       <p class="section-lead">
         Una muestra real de obras ejecutadas por FS Construcciones SPA.
       </p>
@@ -275,6 +275,11 @@
           <span class="gallery-item-label">{{ item.title }}</span>
         </button>
         {% endfor %}
+        <button type="button" class="gallery-more" id="galleryMore" hidden>
+          <span class="gallery-more-icon" aria-hidden="true">&rarr;</span>
+          <span class="gallery-more-title">Ver más</span>
+          <span class="gallery-more-count"></span>
+        </button>
       </div>
 
       <p class="gallery-footnote">Visita nuestro Instagram <a href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener">@fdsconstrucciones</a> para ver más proyectos realizados.</p>
@@ -311,7 +316,7 @@
               <span class="contact-icon">{% include "website/icons/mail.svg" %}</span>
               <div>
                 <strong>Correo</strong>
-                <a href="mailto:fsconstrucciones7@gmail.com">fsconstrucciones7@gmail.com</a>
+                <a href="mailto:contactos@fsconstrucciones.cl">contactos@fsconstrucciones.cl</a>
               </div>
             </li>
             <li>
@@ -333,7 +338,7 @@
             <a class="social-btn" href="https://www.tiktok.com/@fs.construcciones" target="_blank" rel="noopener" aria-label="TikTok">
               {% include "website/icons/tiktok.svg" %}
             </a>
-            <a class="social-btn" href="mailto:fsconstrucciones7@gmail.com" aria-label="Correo">
+            <a class="social-btn" href="mailto:contactos@fsconstrucciones.cl" aria-label="Correo">
               {% include "website/icons/mail.svg" %}
             </a>
           </div>
@@ -386,7 +391,7 @@
     <p class="footer-contact-line">
       <a href="tel:+56930689483">+56 9 3068 9483</a>
       <span class="footer-divider">|</span>
-      <a href="mailto:fsconstrucciones7@gmail.com">fsconstrucciones7@gmail.com</a>
+      <a href="mailto:contactos@fsconstrucciones.cl">contactos@fsconstrucciones.cl</a>
     </p>
     <div class="social-buttons social-buttons-sm">
       <a class="social-btn" href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener" aria-label="Instagram">

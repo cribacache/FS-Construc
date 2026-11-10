@@ -653,9 +653,32 @@ img { max-width: 100%; display: block; }
 
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
 }
+@media (max-width: 780px) {
+  .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+}
+.gallery-more {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius);
+  border: 1.5px dashed var(--ink);
+  background: transparent;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.gallery-more[hidden] { display: none; }
+.gallery-more:hover { background: var(--ink); color: #fff; }
+.gallery-more-icon { font-size: 1.6rem; line-height: 1; }
+.gallery-more-title { font-size: 1.1rem; font-weight: 600; }
+.gallery-more-count { font-size: 0.85rem; opacity: 0.85; }
 .gallery-item {
   position: relative;
   padding: 0;

@@ -7,15 +7,50 @@
   var filters = document.querySelectorAll(".gallery-filter");
   var items = document.querySelectorAll(".gallery-item");
 
+  var GALLERY_PREVIEW = 5;
+  var moreBtn = document.getElementById("galleryMore");
+  var currentFilter = "all";
+  var expanded = false;
+
+  function renderGallery() {
+    var shown = 0;
+    var matching = 0;
+    items.forEach(function (item) {
+      var match = currentFilter === "all" || item.getAttribute("data-category") === currentFilter;
+      if (match) matching++;
+      var show = match && (expanded || shown < GALLERY_PREVIEW);
+      if (show) shown++;
+      item.hidden = !show;
+    });
+    if (!moreBtn) return;
+    var extra = matching - GALLERY_PREVIEW;
+    moreBtn.hidden = extra <= 0;
+    moreBtn.querySelector(".gallery-more-icon").innerHTML = expanded ? "&uarr;" : "&rarr;";
+    moreBtn.querySelector(".gallery-more-title").textContent = expanded ? "Ver menos" : "Ver más";
+    moreBtn.querySelector(".gallery-more-count").textContent =
+      !expanded && extra > 0 ? "+ " + extra + (extra === 1 ? " proyecto" : " proyectos") : "";
+  }
+
   function applyFilter(filter) {
+    currentFilter = filter;
+    expanded = false;
     filters.forEach(function (b) {
       b.classList.toggle("is-active", b.getAttribute("data-filter") === filter);
     });
-    items.forEach(function (item) {
-      var show = filter === "all" || item.getAttribute("data-category") === filter;
-      item.hidden = !show;
+    renderGallery();
+  }
+
+  if (moreBtn) {
+    moreBtn.addEventListener("click", function () {
+      expanded = !expanded;
+      renderGallery();
+      if (!expanded) {
+        var section = document.getElementById("portafolio");
+        if (section) section.scrollIntoView({ block: "start" });
+      }
     });
   }
+  renderGallery();
 
   filters.forEach(function (btn) {
     btn.addEventListener("click", function () {
