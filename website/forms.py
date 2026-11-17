@@ -14,6 +14,8 @@ SERVICE_CHOICES = [
     ("estructuras", "Estructuras metálicas"),
     ("ley-ductos", "Ley de Ductos (RIT)"),
     ("ccdd", "Corrientes débiles y seguridad (CCDD)"),
+    ("consulta", "Consulta general"),
+    ("trabajo", "Quiero trabajar con ustedes"),
     ("otro", "Otro"),
 ]
 

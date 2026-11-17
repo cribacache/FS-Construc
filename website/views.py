@@ -1,6 +1,8 @@
 import json
 import re
 
+from types import SimpleNamespace
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import views as auth_views
@@ -9,10 +11,12 @@ from django.db import transaction
 from django.db.models import Max
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.templatetags.static import static
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from .forms import ContactForm, GalleryImageEditForm, GalleryImageUploadForm
+from .management.commands.import_gallery import GALLERY_FILES
 from .models import GalleryImage, SiteText
 from .ratelimit import get_client_ip, is_rate_limited
 
@@ -20,51 +24,61 @@ SERVICES = [
     {
         "icon": "website/icons/ruler.svg",
         "title": "Diseño y construcción",
+        "category": "fachadas",
         "description": "Proyectos a medida, desde el diseño hasta la construcción completa.",
     },
     {
         "icon": "website/icons/refresh.svg",
         "title": "Remodelaciones",
+        "category": "remodelaciones",
         "description": "Remodelaciones interiores y exteriores, ampliaciones y obras menores.",
     },
     {
         "icon": "website/icons/cabinet.svg",
         "title": "Cocinas y muebles",
+        "category": "cocinas",
         "description": "Cocinas, cubiertas y muebles personalizados a tu estilo.",
     },
     {
         "icon": "website/icons/layers.svg",
         "title": "Revestimientos y fachadas",
+        "category": "fachadas",
         "description": "Revestimiento interior / exterior y fachadas con terminaciones premium.",
     },
     {
         "icon": "website/icons/pergola.svg",
         "title": "Pérgolas y terrazas",
+        "category": "pergolas",
         "description": "Pérgolas, jardineras y terrazas personalizadas para tu jardín.",
     },
     {
         "icon": "website/icons/tv.svg",
         "title": "Salas de TV modernas",
+        "category": "salas-tv",
         "description": "Diseño de salas de TV funcionales y de estilo vanguardista.",
     },
     {
         "icon": "website/icons/mirror.svg",
         "title": "Paneles y espejos LED",
+        "category": "espejos",
         "description": "Paneles, espejos e iluminación LED para tus espacios comunes.",
     },
     {
         "icon": "website/icons/roller.svg",
         "title": "Pintura",
+        "category": "pintura",
         "description": "Pintura interior y exterior, fachadas, anticorrosivos y barnizado.",
     },
     {
         "icon": "website/icons/grid.svg",
         "title": "Pavimentos",
+        "category": "pavimentos",
         "description": "Pavimentos y estampados para pisos de hormigón.",
     },
     {
         "icon": "website/icons/truss.svg",
         "title": "Estructuras metálicas",
+        "category": "estructuras",
         "description": "Estructuras metálicas seguras y eficientes para diversas edificaciones.",
     },
     {
@@ -164,6 +178,44 @@ SERVICE_DETAILS = {
     },
 }
 
+VALUES = [
+    {
+        "title": "Garantía",
+        "description": "Respaldamos cada trabajo con materiales de calidad y mano de obra certificada.",
+    },
+    {
+        "title": "Compromiso",
+        "description": "Cumplimos plazos y acuerdos, manteniéndote informado en cada etapa.",
+    },
+    {
+        "title": "Profesionalismo",
+        "description": "Equipo técnico especializado en diseño, construcción y remodelación.",
+    },
+    {
+        "title": "Dedicación",
+        "description": "Personalizamos cada proyecto según tus gustos y necesidades reales.",
+    },
+]
+
+PROCESS_STEPS = [
+    {
+        "title": "Contacto",
+        "description": "Nos cuentas tu proyecto a través del formulario, correo o WhatsApp.",
+    },
+    {
+        "title": "Diseño y cotización",
+        "description": "Evaluamos el espacio y te entregamos una propuesta a medida.",
+    },
+    {
+        "title": "Construcción",
+        "description": "Ejecutamos con materiales de primera y técnicas avanzadas.",
+    },
+    {
+        "title": "Entrega",
+        "description": "Revisamos contigo cada detalle antes de la entrega final.",
+    },
+]
+
 # Fallback static images, used only if nothing has been uploaded yet for that slot.
 FALLBACK_STATIC = {
     "hero_bg": "img/gallery/hero.jpg",
@@ -190,6 +242,55 @@ def _current_slot_image(placement):
         .order_by("-created_at")
         .first()
     )
+
+
+def _static_gallery():
+    """Photos shipped with the site (the same curated set `import_gallery`
+    loads). Used only while the database has no gallery photos at all, e.g. a
+    fresh install or local development, so the portfolio is never empty."""
+    labels = dict(GalleryImage.CATEGORY_CHOICES)
+    return [
+        SimpleNamespace(
+            pk="",
+            category=category,
+            title=label,
+            image=SimpleNamespace(url=static(f"img/gallery/{filename}")),
+            get_category_display=labels.get(category, label),
+        )
+        for filename, category, label in GALLERY_FILES
+    ]
+
+
+def _service_cards(by_category, details_by_slug):
+    """Services with the photo shown next to them in the list: the detail
+    banner for Ley de Ductos / CCDD, otherwise a gallery photo of the matching
+    category (a different one each time a category repeats)."""
+    used = {}
+    cards = []
+    for service in SERVICES:
+        slug = service.get("slug")
+        if slug:
+            detail = details_by_slug[slug]
+            url = detail["bg_url"] or static(detail["hero_image"])
+        else:
+            category = service["category"]
+            index = used.get(category, 0)
+            used[category] = index + 1
+            photos = by_category.get(category) or []
+            if photos:
+                url = photos[index % len(photos)].image.url
+            else:
+                url = static(f"img/gallery/{category}-{min(index + 1, 2)}.jpg")
+        cards.append({**service, "image_url": url})
+    return cards
+
+
+def _studio_image_url(by_category):
+    for category in ("espejos", "cocinas", "salas-tv"):
+        photos = by_category.get(category)
+        if photos:
+            return photos[-1].image.url
+    return static("img/gallery/espejos-4.jpg")
 
 
 def home(request):
@@ -224,14 +325,31 @@ def home(request):
 
 
 def _site_context(form, edit_mode=False):
-    gallery_qs = GalleryImage.objects.filter(placement="gallery", is_active=True)
+    gallery = list(GalleryImage.objects.filter(placement="gallery", is_active=True))
+    if (
+        not gallery
+        and not edit_mode
+        and not GalleryImage.objects.filter(placement="gallery").exists()
+    ):
+        gallery = _static_gallery()
     category_labels = dict(GalleryImage.CATEGORY_CHOICES)
-    gallery_categories = [
-        {"slug": slug, "label": category_labels[slug]}
-        for slug in gallery_qs.order_by().values_list("category", flat=True).distinct()
-        if slug in category_labels
-    ]
-    gallery_categories.sort(key=lambda c: c["label"])
+    by_category = {}
+    for photo in gallery:
+        by_category.setdefault(photo.category, []).append(photo)
+    # Filters go from the category with the fewest photos to the one with the
+    # most, and "Todos" closes the list. The page opens on the shortest one so
+    # it loads compact; the editor opens on "Todos" so every photo is reachable.
+    gallery_categories = sorted(
+        (
+            {"slug": slug, "label": category_labels[slug], "count": len(photos)}
+            for slug, photos in by_category.items()
+            if slug in category_labels
+        ),
+        key=lambda c: (c["count"], c["label"]),
+    )
+    gallery_start = (
+        "all" if edit_mode or not gallery_categories else gallery_categories[0]["slug"]
+    )
 
     slot_images = {name: _current_slot_image(name) for name in SLOT_NAMES}
     details = []
@@ -246,13 +364,18 @@ def _site_context(form, edit_mode=False):
                 "bg_url": image.image.url if image else None,
             }
         )
+    details_by_slug = {detail["slug"]: detail for detail in details}
     return {
         "form": form,
-        "services": SERVICES,
+        "services": _service_cards(by_category, details_by_slug),
         "details": details,
+        "values": VALUES,
+        "process_steps": PROCESS_STEPS,
+        "studio_image_url": _studio_image_url(by_category),
         "site_texts": dict(SiteText.objects.values_list("key", "value")),
-        "gallery": gallery_qs,
+        "gallery": gallery,
         "gallery_categories": gallery_categories,
+        "gallery_start": gallery_start,
         "hero_bg_url": slot_images["hero_bg"].image.url if slot_images["hero_bg"] else None,
         "build_project_url": slot_images["build_project"].image.url if slot_images["build_project"] else None,
         "build_remodel_url": slot_images["build_remodel"].image.url if slot_images["build_remodel"] else None,
