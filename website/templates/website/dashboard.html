@@ -2,114 +2,120 @@
 {% load static %}
 
 {% block title %}Panel de fotos | FS Construcciones SPA{% endblock %}
+{% block fonts %}<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/panel.css' %}">{% endblock %}
 {% block extra_head %}<meta name="robots" content="noindex">{% endblock %}
 
 {% block content %}
-<header class="site-header dash-header">
-  <div class="container header-inner">
-    <a href="{% url 'home' %}" class="logo">
-      <img src="{% static 'img/logo/mark-white.png' %}" alt="FS Construcciones" class="logo-mark-img">
-      <span class="logo-text">FS CONSTRUCCIONES<small>SPA</small></span>
+<header class="panel-header">
+  <div class="panel-header-inner">
+    <a href="{% url 'home' %}" class="panel-logo">
+      <img src="{% static 'img/logo/mark-white.png' %}" alt="FS Construcciones">
     </a>
-    <span class="dash-header-title">Panel de fotos</span>
-    <div class="dash-header-actions">
+    <p class="display panel-title">Panel de <em>fotos</em></p>
+    <div class="panel-actions">
+      <a href="{% url 'dashboard' %}" class="btn btn-ghost btn-sm">Editor visual</a>
       <a href="{% url 'home' %}" class="btn btn-ghost btn-sm">Ver sitio</a>
       <form method="post" action="{% url 'dashboard_logout' %}">
         {% csrf_token %}
-        <button type="submit" class="btn btn-outline btn-sm">Salir</button>
+        <button type="submit" class="btn btn-ghost btn-sm">Salir</button>
       </form>
     </div>
   </div>
 </header>
 
-<main class="dash-main">
-  <div class="container">
-    {% if messages %}
-      {% for message in messages %}
-        <p class="form-alert dash-flash">{{ message }}</p>
-      {% endfor %}
-    {% endif %}
+<main class="panel">
+  {% if messages %}
+    {% for message in messages %}
+      <p class="flash" role="status">{{ message }}</p>
+    {% endfor %}
+  {% endif %}
 
-    <section class="dash-card">
-      <h2 class="dash-card-title">Subir una foto nueva</h2>
-      <p class="dash-card-lead">
-        Elige la categoría y dónde quieres que aparezca: en la galería de proyectos,
-        como fondo de portada, o en una de las tarjetas de "¿Qué quieres construir?".
-      </p>
-      <form method="post" enctype="multipart/form-data" class="dash-upload-form">
-        {% csrf_token %}
-        <div class="form-row">
-          <label for="{{ upload_form.image.id_for_label }}">Foto</label>
+  <section class="card">
+    <p class="eyebrow card-eyebrow"><b>01</b> — Subir</p>
+    <h2 class="display card-title">Subir una foto <em>nueva</em></h2>
+    <p class="card-lead">
+      Elige la categoría y dónde quieres que aparezca: en la galería de proyectos,
+      como fondo de portada, o en una de las tarjetas de "¿Qué quieres construir?".
+    </p>
+    <form method="post" enctype="multipart/form-data" class="upload-form">
+      {% csrf_token %}
+      <div>
+        <label class="field">
+          <span>Foto</span>
           {{ upload_form.image }}
-          {{ upload_form.image.errors }}
-        </div>
-        <div class="form-row">
-          <label for="{{ upload_form.title.id_for_label }}">Título / descripción corta</label>
-          {{ upload_form.title }}
-        </div>
-        <div class="form-row form-row-split">
-          <div>
-            <label for="{{ upload_form.category.id_for_label }}">Categoría</label>
-            {{ upload_form.category }}
-          </div>
-          <div>
-            <label for="{{ upload_form.placement.id_for_label }}">Dónde se muestra</label>
-            {{ upload_form.placement }}
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Subir foto</button>
-      </form>
-    </section>
-
-    <section class="dash-card">
-      <h2 class="dash-card-title">Tus fotos ({{ photo_rows|length }})</h2>
-      <p class="dash-card-lead">
-        Marca "Visible" para que aparezca en el sitio, o desmárcala para ocultarla sin
-        borrarla. El número de orden más chico aparece primero.
-      </p>
-
-      <div class="dash-photo-list">
-        {% for photo, form in photo_rows %}
-        <div class="dash-photo-row">
-          <img src="{{ photo.image.url }}" alt="{{ photo.title }}" class="dash-photo-thumb">
-          <form method="post" action="{% url 'dashboard_update' photo.pk %}" class="dash-photo-form">
-            {% csrf_token %}
-            <div class="dash-photo-fields">
-              <div class="form-row">
-                <label>Título</label>
-                {{ form.title }}
-              </div>
-              <div class="form-row">
-                <label>Categoría</label>
-                {{ form.category }}
-              </div>
-              <div class="form-row">
-                <label>Dónde se muestra</label>
-                {{ form.placement }}
-              </div>
-              <div class="form-row dash-photo-order">
-                <label>Orden</label>
-                {{ form.order }}
-              </div>
-              <div class="form-row dash-photo-active">
-                <label>{{ form.is_active }} Visible</label>
-              </div>
-            </div>
-            <div class="dash-photo-actions">
-              <button type="submit" class="btn btn-outline btn-sm">Guardar</button>
-            </div>
-          </form>
-          <form method="post" action="{% url 'dashboard_delete' photo.pk %}" class="dash-photo-delete"
-                onsubmit="return confirm('¿Eliminar esta foto? No se puede deshacer.');">
-            {% csrf_token %}
-            <button type="submit" class="dash-delete-btn" aria-label="Eliminar foto">&times;</button>
-          </form>
-        </div>
-        {% empty %}
-        <p class="dash-card-lead">Todavía no has subido ninguna foto.</p>
-        {% endfor %}
+        </label>
+        {{ upload_form.image.errors }}
       </div>
-    </section>
-  </div>
+      <label class="field">
+        <span>Título / descripción corta</span>
+        {{ upload_form.title }}
+      </label>
+      <div class="field-split">
+        <label class="field">
+          <span>Categoría</span>
+          {{ upload_form.category }}
+        </label>
+        <label class="field">
+          <span>Dónde se muestra</span>
+          {{ upload_form.placement }}
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary">Subir foto</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <p class="eyebrow card-eyebrow"><b>02</b> — Biblioteca</p>
+    <h2 class="display card-title">Tus fotos <em>({{ photo_rows|length }})</em></h2>
+    <p class="card-lead">
+      Marca "Visible" para que aparezca en el sitio, o desmárcala para ocultarla sin
+      borrarla. El número de orden más chico aparece primero.
+    </p>
+
+    <div class="photo-list">
+      {% for photo, form in photo_rows %}
+      <div class="photo-row">
+        <img src="{{ photo.image.url }}" alt="{{ photo.title }}" class="photo-thumb" loading="lazy">
+        <form method="post" action="{% url 'dashboard_update' photo.pk %}" class="photo-form">
+          {% csrf_token %}
+          <div class="photo-fields">
+            <label class="field">
+              <span>Título</span>
+              {{ form.title }}
+            </label>
+            <label class="field">
+              <span>Categoría</span>
+              {{ form.category }}
+            </label>
+            <label class="field">
+              <span>Dónde se muestra</span>
+              {{ form.placement }}
+            </label>
+            <label class="field photo-order">
+              <span>Orden</span>
+              {{ form.order }}
+            </label>
+            <div class="photo-active">
+              <label>{{ form.is_active }} Visible</label>
+            </div>
+          </div>
+          <div>
+            <button type="submit" class="btn btn-outline btn-sm">Guardar</button>
+          </div>
+        </form>
+        <form method="post" action="{% url 'dashboard_delete' photo.pk %}" class="photo-delete"
+              data-confirm="¿Eliminar esta foto? No se puede deshacer.">
+          {% csrf_token %}
+          <button type="submit" class="delete-btn" aria-label="Eliminar foto" title="Eliminar foto">&times;</button>
+        </form>
+      </div>
+      {% empty %}
+      <p class="empty">Todavía no has subido ninguna foto.</p>
+      {% endfor %}
+    </div>
+  </section>
 </main>
+
+<script src="{% static 'js/panel.js' %}"></script>
 {% endblock %}

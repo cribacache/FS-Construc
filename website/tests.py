@@ -317,3 +317,32 @@ class GalleryStartTests(TestCase):
         html = self.client.get("/").content.decode()
         self.assertIn('class="gallery-item"', html)
         self.assertIn('data-filter="all"', html)
+
+
+@NO_MANIFEST
+class PanelPagesTests(TestCase):
+    def test_login_page_renders_with_the_form_fields(self):
+        response = self.client.get("/mis-fotos/login/")
+        self.assertContains(response, 'name="username"')
+        self.assertContains(response, 'name="password"')
+        self.assertContains(response, 'name="next"')
+
+    def test_photo_list_renders_and_has_no_inline_handlers(self):
+        get_user_model().objects.create_user("editor", password="pw-test-123")
+        self.client.login(username="editor", password="pw-test-123")
+        response = self.client.get("/mis-fotos/lista/")
+        self.assertContains(response, "Subir una foto")
+        self.assertContains(response, "Todavía no has subido ninguna foto.")
+        # The CSP blocks inline event handlers, so confirmations use data-confirm.
+        self.assertNotContains(response, "onsubmit=")
+
+
+@NO_MANIFEST
+class EditorCategoriesTests(TestCase):
+    def test_editor_offers_every_category_even_when_the_gallery_is_empty(self):
+        get_user_model().objects.create_user("editor", password="pw-test-123")
+        self.client.login(username="editor", password="pw-test-123")
+        html = self.client.get("/mis-fotos/").content.decode()
+        for slug, _label in GalleryImage.CATEGORY_CHOICES:
+            self.assertIn(f'data-filter="{slug}"', html)
+        self.assertIn('class="gallery-filter is-active" data-filter="all"', html)

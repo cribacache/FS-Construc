@@ -339,11 +339,16 @@ def _site_context(form, edit_mode=False):
     # Filters go from the category with the fewest photos to the one with the
     # most, and "Todos" closes the list. The page opens on the shortest one so
     # it loads compact; the editor opens on "Todos" so every photo is reachable.
+    counts = {slug: len(photos) for slug, photos in by_category.items() if slug in category_labels}
+    if edit_mode:
+        # The editor lists every category (even empty ones) so a photo can be
+        # added to any of them, including the very first photo of a new category.
+        for slug in category_labels:
+            counts.setdefault(slug, 0)
     gallery_categories = sorted(
         (
-            {"slug": slug, "label": category_labels[slug], "count": len(photos)}
-            for slug, photos in by_category.items()
-            if slug in category_labels
+            {"slug": slug, "label": category_labels[slug], "count": count}
+            for slug, count in counts.items()
         ),
         key=lambda c: (c["count"], c["label"]),
     )
