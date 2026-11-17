@@ -1,136 +1,686 @@
 (function () {
-  document.querySelectorAll("[data-bg]").forEach(function (el) {
-    var url = el.getAttribute("data-bg");
-    if (url) el.style.backgroundImage = "url('" + url + "')";
+  "use strict";
+
+  var root = document.documentElement;
+  var EDIT = root.hasAttribute("data-edit");
+  var ANIM = root.classList.contains("anim");
+  var FINE = !!(window.matchMedia && window.matchMedia("(pointer: fine)").matches);
+  var REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  root.classList.add("anim-ready");
+
+  function $(selector, context) { return (context || document).querySelector(selector); }
+  function $$(selector, context) { return Array.prototype.slice.call((context || document).querySelectorAll(selector)); }
+  function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+  function make(tag, className) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    return node;
+  }
+
+  // Un módulo que falla no debe dejar la página oculta ni romper a los demás.
+  function safe(fn, animated) {
+    try {
+      fn();
+    } catch (error) {
+      if (window.console) window.console.error(error);
+      if (animated) { root.classList.remove("anim"); root.classList.remove("is-intro"); }
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Scroll suave (inercia). Solo con mouse/trackpad; en táctil es nativo */
+  /* ------------------------------------------------------------------ */
+  var smooth = null;
+
+  safe(function () {
+    if (!ANIM || !FINE) return;
+    var target = window.pageYOffset;
+    var current = target;
+    var running = false;
+    var LERP = 0.09;
+
+    function maxScroll() { return Math.max(0, root.scrollHeight - window.innerHeight); }
+
+    function tick() {
+      var diff = target - current;
+      if (Math.abs(diff) < 0.4) {
+        current = target;
+        window.scrollTo(0, current);
+        running = false;
+        return;
+      }
+      current += diff * LERP;
+      window.scrollTo(0, current);
+      window.requestAnimationFrame(tick);
+    }
+
+    function start() {
+      if (running) return;
+      current = window.pageYOffset;
+      running = true;
+      window.requestAnimationFrame(tick);
+    }
+
+    function blocked(node) {
+      if (root.classList.contains("no-scroll") || root.classList.contains("is-intro")) return true;
+      return !!(node && node.closest && node.closest("textarea, select, [data-no-smooth]"));
+    }
+
+    window.addEventListener("wheel", function (event) {
+      if (event.ctrlKey || event.defaultPrevented || blocked(event.target)) return;
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      event.preventDefault();
+      var delta = event.deltaY;
+      if (event.deltaMode === 1) delta *= 32;
+      else if (event.deltaMode === 2) delta *= window.innerHeight;
+      if (!running) target = window.pageYOffset;
+      target = clamp(target + delta, 0, maxScroll());
+      start();
+    }, { passive: false });
+
+    window.addEventListener("scroll", function () {
+      if (!running) { target = current = window.pageYOffset; }
+    }, { passive: true });
+
+    window.addEventListener("resize", function () { target = clamp(target, 0, maxScroll()); });
+
+    smooth = { to: function (y) { target = clamp(y, 0, maxScroll()); start(); } };
+  }, true);
+
+  function scrollToElement(node) {
+    var margin = parseFloat(window.getComputedStyle(node).scrollMarginTop) || 0;
+    var y = node.getBoundingClientRect().top + window.pageYOffset - margin;
+    if (smooth) smooth.to(y);
+    else window.scrollTo({ top: y, behavior: REDUCED ? "auto" : "smooth" });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Intro y portada                                                      */
+  /* ------------------------------------------------------------------ */
+  var intro = $("#intro");
+
+  function heroIn() { root.classList.add("hero-in"); }
+
+  safe(function () {
+    if (!ANIM) return;
+    if (root.classList.contains("is-intro") && intro) {
+      window.setTimeout(heroIn, 2200);
+      window.setTimeout(function () { intro.classList.add("is-out"); }, 2600);
+      window.setTimeout(function () { root.classList.remove("is-intro"); }, 3800);
+    } else {
+      window.setTimeout(heroIn, 120);
+    }
+  }, true);
+
+  /* ------------------------------------------------------------------ */
+  /* Titulares por línea (máscara) y portada letra por letra              */
+  /* ------------------------------------------------------------------ */
+  function readLines(node) {
+    var lines = [""];
+    Array.prototype.forEach.call(node.childNodes, function (child) {
+      if (child.nodeName === "BR") lines.push("");
+      else lines[lines.length - 1] += child.textContent;
+    });
+    return lines
+      .map(function (line) { return line.replace(/\s+/g, " ").trim(); })
+      .filter(Boolean);
+  }
+
+  function buildLines(node, lines, letters) {
+    var full = lines.join(" ");
+    node.textContent = "";
+    node.setAttribute("aria-label", full);
+    return lines.map(function (text) {
+      var mask = make("span", "ln");
+      var inner = make("span", "ln-in");
+      mask.setAttribute("aria-hidden", "true");
+      if (letters) {
+        text.split("").forEach(function (character) {
+          var letter = make("span", "ch");
+          letter.textContent = character === " " ? "\u00a0" : character;
+          inner.appendChild(letter);
+        });
+      } else {
+        inner.textContent = text;
+      }
+      mask.appendChild(inner);
+      node.appendChild(mask);
+      return inner;
+    });
+  }
+
+  // Última línea del titular en cursiva azul; si el titular es de una sola línea,
+  // solo su última palabra.
+  function accentLastLine(inners, lines) {
+    if (!inners.length) return;
+    if (inners.length > 1) {
+      inners[inners.length - 1].classList.add("ln-accent");
+      return;
+    }
+    var words = lines[0].split(" ");
+    if (words.length < 2) return;
+    var last = words.pop();
+    inners[0].textContent = words.join(" ") + " ";
+    var emphasis = document.createElement("em");
+    emphasis.className = "ln-accent";
+    emphasis.textContent = last;
+    inners[0].appendChild(emphasis);
+  }
+
+  safe(function () {
+    if (EDIT) return;
+
+    var title = $("#heroTitle");
+    if (title) {
+      var lines = readLines(title);
+      var words = lines.join(" ").split(" ");
+      if (words.length <= 4) lines = words;
+      var inners = buildLines(title, lines, ANIM);
+      if (inners.length === 3) inners[1].classList.add("is-accent");
+      if (ANIM) {
+        inners.forEach(function (inner, index) {
+          $$(".ch", inner).forEach(function (letter, position) {
+            letter.style.transitionDelay = (index * 0.12 + position * 0.03) + "s";
+          });
+        });
+      }
+    }
+
+    $$("[data-lines]").forEach(function (heading) {
+      var lines = readLines(heading);
+      var inners = buildLines(heading, lines, false);
+      accentLastLine(inners, lines);
+      inners.forEach(function (inner, index) { inner.style.transitionDelay = (index * 0.12) + "s"; });
+    });
+
+    var studio = $("#studioTitle");
+    if (studio) {
+      var text = studio.textContent.replace(/\s+/g, " ").trim();
+      studio.textContent = "";
+      studio.setAttribute("aria-label", text);
+      text.split(" ").forEach(function (word, index) {
+        var span = make("span", "w");
+        span.setAttribute("aria-hidden", "true");
+        if (index >= 4) {
+          var emphasis = document.createElement("em");
+          emphasis.textContent = word;
+          span.appendChild(emphasis);
+        } else {
+          span.textContent = word;
+        }
+        span.style.transitionDelay = (index * 0.08) + "s";
+        studio.appendChild(span);
+        studio.appendChild(document.createTextNode(" "));
+      });
+    }
+  }, true);
+
+  /* ------------------------------------------------------------------ */
+  /* Revelado al hacer scroll                                             */
+  /* ------------------------------------------------------------------ */
+  function runCounter(node) {
+    var to = parseInt(node.getAttribute("data-count"), 10) || 0;
+    var begin = window.performance.now();
+    function frame(now) {
+      var k = Math.min(1, (now - begin) / 1800);
+      node.textContent = String(Math.round(to * (1 - Math.pow(1 - k, 4))));
+      if (k < 1) window.requestAnimationFrame(frame);
+    }
+    window.requestAnimationFrame(frame);
+  }
+
+  safe(function () {
+    if (!ANIM) return;
+    var counters = $$("[data-count]");
+    counters.forEach(function (node) { node.textContent = "0"; });
+
+    $$("[data-reveal]").forEach(function (node) {
+      var stagger = parseFloat(node.getAttribute("data-stagger"));
+      if (!isNaN(stagger)) node.style.transitionDelay = (stagger * 0.1) + "s";
+    });
+
+    var once = $$("[data-reveal], [data-lines], .imgrev, [data-count]");
+    var words = $$("#studioTitle .w");
+
+    if (!("IntersectionObserver" in window)) {
+      once.forEach(function (node) { node.classList.add("is-in"); });
+      words.forEach(function (node) { node.classList.add("is-in"); });
+      counters.forEach(runCounter);
+      return;
+    }
+
+    var observer = new window.IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var node = entry.target;
+        observer.unobserve(node);
+        if (node.hasAttribute("data-count")) runCounter(node);
+        else node.classList.add("is-in");
+      });
+    }, { rootMargin: "0px 0px -10% 0px" });
+    once.forEach(function (node) { observer.observe(node); });
+
+    var wordObserver = new window.IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) { entry.target.classList.toggle("is-in", entry.isIntersecting); });
+    }, { rootMargin: "-30% 0px -30% 0px" });
+    words.forEach(function (node) { wordObserver.observe(node); });
+  }, true);
+
+  /* ------------------------------------------------------------------ */
+  /* Cabecera, menú móvil y efectos ligados al scroll                     */
+  /* ------------------------------------------------------------------ */
+  var header = $("#siteHeader");
+  var menu = $("#mobileMenu");
+  var menuButton = $("#menuBtn");
+
+  function openMenu() {
+    if (!menu) return;
+    menu.classList.add("is-open");
+    menu.setAttribute("aria-hidden", "false");
+    menuButton.setAttribute("aria-expanded", "true");
+    root.classList.add("no-scroll");
+  }
+
+  function closeMenu() {
+    if (!menu || !menu.classList.contains("is-open")) return;
+    menu.classList.remove("is-open");
+    menu.setAttribute("aria-hidden", "true");
+    menuButton.setAttribute("aria-expanded", "false");
+    root.classList.remove("no-scroll");
+  }
+
+  if (menuButton) menuButton.addEventListener("click", openMenu);
+  if (menu) {
+    var menuClose = $("#menuClose");
+    if (menuClose) menuClose.addEventListener("click", closeMenu);
+  }
+
+  var hero = $("#inicio");
+  var heroMedia = $(".hero-media");
+  var heroContent = $(".hero-content");
+  var studioSection = $("#estudio");
+  var studioMark = $(".studio-mark");
+  var studioMedia = $("#studioMedia");
+  var processSection = $("#proceso");
+  var processFill = $("#processFill");
+  var ticking = false;
+
+  function update() {
+    ticking = false;
+    var vh = window.innerHeight;
+    var y = window.pageYOffset;
+
+    if (header) header.classList.toggle("is-solid", y > 60);
+    if (!ANIM) return;
+
+    if (hero && heroMedia && heroContent && y <= hero.offsetHeight) {
+      var p = clamp(y / hero.offsetHeight, 0, 1);
+      heroMedia.style.transform = "translate3d(0," + (p * 30) + "%,0)";
+      heroContent.style.opacity = String(clamp(1 - p / 0.6, 0, 1));
+    }
+
+    if (studioSection) {
+      var rect = studioSection.getBoundingClientRect();
+      if (rect.bottom > 0 && rect.top < vh) {
+        var q = clamp((vh - rect.top) / (vh + rect.height), 0, 1);
+        if (studioMark) studioMark.style.transform = "translate3d(0," + (-15 + 30 * q) + "%,0)";
+        if (studioMedia) {
+          var image = studioMedia.firstElementChild;
+          if (image) image.style.transform = "scale(" + (0.7 + 0.3 * clamp(q / 0.5, 0, 1)) + ")";
+        }
+      }
+    }
+
+    if (processSection && processFill) {
+      var box = processSection.getBoundingClientRect();
+      var r = clamp((vh * 0.75 - box.top) / (box.height + vh * 0.15), 0, 1);
+      processFill.style.transform = "scaleX(" + r + ")";
+    }
+  }
+
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(update);
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  update();
+
+  /* ------------------------------------------------------------------ */
+  /* Servicios: lista + foto fija                                         */
+  /* ------------------------------------------------------------------ */
+  safe(function () {
+    var items = $$(".svc-item");
+    if (!items.length) return;
+    var images = $$(".svc-img");
+    var captions = $$(".svc-cap-title");
+    var count = $("#svcCount");
+    var active = 0;
+
+    function activate(index) {
+      if (index === active) return;
+      active = index;
+      items.forEach(function (item, i) { item.classList.toggle("is-active", i === index); });
+      images.forEach(function (image, i) { image.classList.toggle("is-active", i === index); });
+      captions.forEach(function (caption, i) { caption.classList.toggle("is-active", i === index); });
+      if (count) count.textContent = (index < 9 ? "0" : "") + (index + 1);
+    }
+
+    items.forEach(function (item, index) {
+      item.addEventListener("mouseenter", function () { activate(index); });
+      item.addEventListener("focusin", function () { activate(index); });
+      item.addEventListener("click", function () { activate(index); });
+    });
   });
 
-  var filters = document.querySelectorAll(".gallery-filter");
-  var items = document.querySelectorAll(".gallery-item");
+  /* ------------------------------------------------------------------ */
+  /* Portafolio: filtros, "ver más" y visor                               */
+  /* ------------------------------------------------------------------ */
+  var galleryGrid = $(".gallery-grid");
+  var applyFilter = function () {};
 
-  var EDIT_MODE = document.documentElement.hasAttribute("data-edit");
-  var GALLERY_PREVIEW = EDIT_MODE ? Infinity : 5;
-  var moreBtn = document.getElementById("galleryMore");
-  var currentFilter = "all";
-  var expanded = false;
+  safe(function () {
+    if (!galleryGrid) return;
 
-  function renderGallery() {
-    var shown = 0;
-    var matching = 0;
-    items.forEach(function (item) {
-      var match = currentFilter === "all" || item.getAttribute("data-category") === currentFilter;
-      if (match) matching++;
-      var show = match && (expanded || shown < GALLERY_PREVIEW);
-      if (show) shown++;
-      item.hidden = !show;
+    var filters = $$(".gallery-filter");
+    var moreButton = $("#galleryMore");
+    var PREVIEW = EDIT ? Infinity : 9;
+    var RATIOS = ["tall", "square", "tall", "wide"];
+    var startButton = $(".gallery-filter.is-active");
+    var currentFilter = startButton ? startButton.getAttribute("data-filter") : "all";
+    var expanded = false;
+
+    function columnCount() {
+      var template = window.getComputedStyle(galleryGrid).gridTemplateColumns || "";
+      return Math.max(1, template.split(" ").filter(Boolean).length);
+    }
+
+    function render(animate) {
+      var items = $$(".gallery-item", galleryGrid);
+      var columns = columnCount();
+      var shown = 0;
+      var matching = 0;
+
+      items.forEach(function (item) {
+        var match = currentFilter === "all" || item.getAttribute("data-category") === currentFilter;
+        if (match) matching++;
+        var show = match && (expanded || shown < PREVIEW);
+        item.hidden = !show;
+        if (!show) return;
+        item.setAttribute("data-ratio", RATIOS[Math.floor(shown / columns) % RATIOS.length]);
+        if (animate && ANIM) {
+          item.classList.remove("is-pop");
+          void item.offsetWidth;
+          item.style.animationDelay = (shown * 0.04) + "s";
+          item.classList.add("is-pop");
+        }
+        shown++;
+      });
+
+      if (!moreButton) return;
+      var extra = matching - PREVIEW;
+      moreButton.hidden = !(extra > 0);
+      moreButton.querySelector(".gallery-more-icon").innerHTML = expanded ? "&uarr;" : "&rarr;";
+      moreButton.querySelector(".gallery-more-title").textContent = expanded ? "Ver menos" : "Ver más";
+      moreButton.querySelector(".gallery-more-count").textContent =
+        !expanded && extra > 0 ? "+ " + extra + (extra === 1 ? " proyecto" : " proyectos") : "";
+    }
+
+    applyFilter = function (filter) {
+      currentFilter = filter;
+      expanded = false;
+      filters.forEach(function (button) {
+        button.classList.toggle("is-active", button.getAttribute("data-filter") === filter);
+      });
+      render(true);
+    };
+
+    filters.forEach(function (button) {
+      button.addEventListener("click", function () { applyFilter(button.getAttribute("data-filter")); });
     });
-    if (!moreBtn) return;
-    var extra = matching - GALLERY_PREVIEW;
-    moreBtn.hidden = extra <= 0;
-    moreBtn.querySelector(".gallery-more-icon").innerHTML = expanded ? "&uarr;" : "&rarr;";
-    moreBtn.querySelector(".gallery-more-title").textContent = expanded ? "Ver menos" : "Ver más";
-    moreBtn.querySelector(".gallery-more-count").textContent =
-      !expanded && extra > 0 ? "+ " + extra + (extra === 1 ? " proyecto" : " proyectos") : "";
-  }
 
-  function applyFilter(filter) {
-    currentFilter = filter;
-    expanded = false;
-    filters.forEach(function (b) {
-      b.classList.toggle("is-active", b.getAttribute("data-filter") === filter);
-    });
-    renderGallery();
-  }
+    if (moreButton) {
+      moreButton.addEventListener("click", function () {
+        expanded = !expanded;
+        render(true);
+        if (!expanded) {
+          var section = $("#portafolio");
+          if (section) scrollToElement(section);
+        }
+      });
+    }
 
-  if (moreBtn) {
-    moreBtn.addEventListener("click", function () {
-      expanded = !expanded;
-      renderGallery();
-      if (!expanded) {
-        var section = document.getElementById("portafolio");
-        if (section) section.scrollIntoView({ block: "start" });
+    galleryGrid.addEventListener("animationend", function (event) {
+      if (event.target.classList && event.target.classList.contains("gallery-item")) {
+        event.target.classList.remove("is-pop");
       }
     });
-  }
-  renderGallery();
 
-  filters.forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      applyFilter(btn.getAttribute("data-filter"));
+    var resizeTimer = 0;
+    window.addEventListener("resize", function () {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(function () { render(false); }, 150);
     });
-  });
 
-  // Navbar: los items del menu desplegable aplican el filtro / pestaña y luego
-  // el ancla (#portafolio, #nosotros...) hace el scroll.
-  document.querySelectorAll("[data-gallery-filter]").forEach(function (link) {
-    link.addEventListener("click", function () {
-      applyFilter(link.getAttribute("data-gallery-filter"));
-    });
-  });
-  document.querySelectorAll("[data-values-tab]").forEach(function (link) {
-    link.addEventListener("click", function () {
-      var tab = document.querySelector('.values-tab[data-value="' + link.getAttribute("data-values-tab") + '"]');
-      if (tab) tab.click();
-    });
-  });
-  // Cierra el menu tras elegir (el hover lo mantendria abierto bajo el cursor).
-  document.querySelectorAll(".nav-dropdown a").forEach(function (link) {
-    link.addEventListener("click", function () {
-      var item = link.closest(".nav-item");
-      item.classList.add("is-closed");
-      if (document.activeElement) document.activeElement.blur();
-      item.addEventListener("mouseleave", function () { item.classList.remove("is-closed"); }, { once: true });
-    });
-  });
+    render(false);
 
-  var lightbox = document.getElementById("lightbox");
-  var lightboxImg = document.getElementById("lightboxImg");
-  var lightboxClose = document.getElementById("lightboxClose");
+    /* Visor a pantalla completa */
+    var box = $("#lightbox");
+    var image = $("#lightboxImg");
+    var titleNode = $("#lightboxTitle");
+    var categoryNode = $("#lightboxCat");
+    var currentItem = null;
+    var closeTimer = 0;
 
-  items.forEach(function (item) {
-    item.addEventListener("click", function () {
-      lightboxImg.src = item.getAttribute("data-full");
-      lightboxImg.alt = item.querySelector("img").alt;
-      lightbox.hidden = false;
-    });
-  });
+    function visibleItems() {
+      return $$(".gallery-item", galleryGrid).filter(function (item) { return !item.hidden; });
+    }
 
-  function closeLightbox() { lightbox.hidden = true; lightboxImg.src = ""; }
-  lightboxClose.addEventListener("click", closeLightbox);
-  lightbox.addEventListener("click", function (e) {
-    if (e.target === lightbox) closeLightbox();
-  });
+    function show(item) {
+      currentItem = item;
+      image.src = item.getAttribute("data-full");
+      image.alt = item.getAttribute("data-title") || "";
+      titleNode.textContent = item.getAttribute("data-title") || "";
+      categoryNode.textContent = item.getAttribute("data-label") || "";
+    }
 
-  var buildPromptBtn = document.getElementById("buildPromptBtn");
-  var buildPanel = document.getElementById("buildPanel");
-  var buildPanelClose = document.getElementById("buildPanelClose");
-
-  function closeBuildPanel() { if (!EDIT_MODE) buildPanel.hidden = true; }
-  buildPromptBtn.addEventListener("click", function () { buildPanel.hidden = false; });
-  buildPanelClose.addEventListener("click", closeBuildPanel);
-  buildPanel.addEventListener("click", function (e) {
-    if (e.target === buildPanel) closeBuildPanel();
-  });
-
-  document.addEventListener("keydown", function (e) {
-    if (e.key !== "Escape") return;
-    closeLightbox();
-    closeBuildPanel();
-  });
-
-  var valueTabs = document.querySelectorAll(".values-tab");
-  var valuePanels = document.querySelectorAll(".values-tab-panel-item");
-  valueTabs.forEach(function (tab) {
-    tab.addEventListener("click", function () {
-      var value = tab.getAttribute("data-value");
-      valueTabs.forEach(function (t) {
-        t.classList.remove("is-active");
-        t.setAttribute("aria-selected", "false");
+    function open(item) {
+      window.clearTimeout(closeTimer);
+      show(item);
+      box.hidden = false;
+      root.classList.add("no-scroll");
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(function () { box.classList.add("is-open"); });
       });
-      tab.classList.add("is-active");
-      tab.setAttribute("aria-selected", "true");
-      valuePanels.forEach(function (p) {
-        p.classList.toggle("is-active", p.getAttribute("data-value") === value);
+    }
+
+    function close() {
+      if (box.hidden) return;
+      box.classList.remove("is-open");
+      root.classList.remove("no-scroll");
+      closeTimer = window.setTimeout(function () {
+        box.hidden = true;
+        image.src = "";
+      }, 420);
+    }
+
+    function step(direction) {
+      var list = visibleItems();
+      if (!list.length || !currentItem) return;
+      var index = list.indexOf(currentItem);
+      show(list[(index + direction + list.length) % list.length]);
+    }
+
+    $$(".gallery-item", galleryGrid).forEach(function (item) {
+      item.addEventListener("click", function () { open(item); });
+    });
+    $("#lightboxClose").addEventListener("click", close);
+    $("#lightboxPrev").addEventListener("click", function (event) { event.stopPropagation(); step(-1); });
+    $("#lightboxNext").addEventListener("click", function (event) { event.stopPropagation(); step(1); });
+    box.addEventListener("click", function (event) {
+      if (event.target === box) close();
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (box.hidden) return;
+      if (event.key === "ArrowLeft") step(-1);
+      else if (event.key === "ArrowRight") step(1);
+    });
+    box._close = close;
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* Contacto: cotizar / consultas y trabajo, y envío por WhatsApp        */
+  /* ------------------------------------------------------------------ */
+  var setContactMode = function () {};
+
+  safe(function () {
+    var form = $("#contactForm");
+    if (!form) return;
+    var tabs = $$(".contact-tab");
+    var select = form.querySelector("select");
+    var message = form.querySelector("textarea");
+    var label = $("#serviceLabel");
+    var JOB = ["consulta", "trabajo"];
+    var quotePlaceholder = message ? message.getAttribute("placeholder") || "" : "";
+    var contactPlaceholder = "Escribe tu consulta o cuéntanos cómo te gustaría sumarte al equipo…";
+
+    setContactMode = function (mode) {
+      var isContact = mode === "contacto";
+      tabs.forEach(function (tab) {
+        var on = tab.getAttribute("data-mode") === mode;
+        tab.classList.toggle("is-active", on);
+        tab.setAttribute("aria-selected", on ? "true" : "false");
       });
+      if (label) label.textContent = isContact ? "Motivo del mensaje" : "Servicio de interés";
+      if (message) message.setAttribute("placeholder", isContact ? contactPlaceholder : quotePlaceholder);
+      if (!select) return;
+      Array.prototype.forEach.call(select.options, function (option) {
+        var isJob = JOB.indexOf(option.value) !== -1;
+        var allowed = option.value === "" || option.value === "otro" || (isContact ? isJob : !isJob);
+        option.disabled = !allowed;
+        option.hidden = !allowed;
+      });
+      if (select.selectedOptions.length && select.selectedOptions[0].disabled) select.value = "";
+      if (isContact && !select.value) select.value = "consulta";
+    };
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener("click", function () { setContactMode(tab.getAttribute("data-mode")); });
+    });
+
+    setContactMode(select && JOB.indexOf(select.value) !== -1 ? "contacto" : "cotizar");
+
+    var whatsapp = $("#waSend");
+    if (whatsapp) {
+      whatsapp.addEventListener("click", function () {
+        function value(name) {
+          var field = form.elements[name];
+          return field && field.value ? field.value.trim() : "";
+        }
+        var service = select && select.selectedOptions.length && select.value
+          ? select.selectedOptions[0].textContent.trim() : "";
+        var text = "Hola FS Construcciones, soy " + (value("name") || "un visitante del sitio") + ".";
+        if (service) text += "\nInterés: " + service;
+        if (value("message")) text += "\n" + value("message");
+        var contact = [value("phone"), value("email")].filter(Boolean).join(" / ");
+        if (contact) text += "\nContacto: " + contact;
+        window.open("https://wa.me/" + whatsapp.getAttribute("data-wa") + "?text=" + encodeURIComponent(text), "_blank", "noopener");
+      });
+    }
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* Enlaces internos (scroll suave, filtro y modo de contacto)           */
+  /* ------------------------------------------------------------------ */
+  document.addEventListener("click", function (event) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    var link = event.target.closest ? event.target.closest("a[href^='#']") : null;
+    if (!link) return;
+    var hash = link.getAttribute("href");
+    if (!hash || hash.length < 2) return;
+    var node = document.getElementById(hash.slice(1));
+    if (!node) return;
+
+    event.preventDefault();
+    var mode = link.getAttribute("data-contact-mode");
+    if (mode) setContactMode(mode);
+    var filter = link.getAttribute("data-gallery-filter");
+    if (filter) applyFilter(filter);
+    closeMenu();
+    scrollToElement(node);
+    if (window.history && window.history.replaceState) window.history.replaceState(null, "", hash);
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    closeMenu();
+    var box = $("#lightbox");
+    if (box && box._close) box._close();
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* Cursor personalizado y botones magnéticos                            */
+  /* ------------------------------------------------------------------ */
+  safe(function () {
+    if (!ANIM || !FINE) return;
+
+    var ring = make("div", "cursor-ring");
+    var ringLabel = make("span");
+    var dot = make("div", "cursor-dot");
+    ring.setAttribute("data-mode", "");
+    ring.appendChild(ringLabel);
+    dot.appendChild(make("span"));
+    document.body.appendChild(ring);
+    document.body.appendChild(dot);
+    root.classList.add("cursor-on");
+
+    var mx = -100, my = -100, rx = -100, ry = -100;
+    var seen = false;
+    var last = "";
+
+    window.addEventListener("mousemove", function (event) {
+      mx = event.clientX;
+      my = event.clientY;
+      if (!seen) { seen = true; rx = mx; ry = my; }
+      root.classList.add("cursor-live");
+
+      var node = event.target.closest ? event.target.closest("[data-cursor], a, button, select, input, textarea, label") : null;
+      var mode = "";
+      var text = "";
+      if (node) {
+        text = node.getAttribute("data-cursor") || "";
+        mode = text ? "label" : "hover";
+      }
+      var key = mode + ":" + text;
+      if (key !== last) {
+        last = key;
+        ring.setAttribute("data-mode", mode);
+        ringLabel.textContent = text;
+      }
+    }, { passive: true });
+
+    root.addEventListener("mouseleave", function () { root.classList.remove("cursor-live"); });
+
+    (function loop() {
+      rx += (mx - rx) * 0.22;
+      ry += (my - ry) * 0.22;
+      dot.style.transform = "translate3d(" + mx + "px," + my + "px,0)";
+      ring.style.transform = "translate3d(" + rx + "px," + ry + "px,0)";
+      window.requestAnimationFrame(loop);
+    })();
+
+    $$(".magnetic").forEach(function (node) {
+      node.addEventListener("mousemove", function (event) {
+        var box = node.getBoundingClientRect();
+        var x = (event.clientX - box.left - box.width / 2) * 0.35;
+        var y = (event.clientY - box.top - box.height / 2) * 0.35;
+        node.style.transform = "translate(" + x + "px," + y + "px)";
+      });
+      node.addEventListener("mouseleave", function () { node.style.transform = ""; });
     });
   });
 })();

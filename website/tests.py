@@ -249,3 +249,100 @@ class EditableTextTests(TestCase):
         page = self.client.get("/mis-fotos/")
         self.assertContains(page, 'data-slot="detail_ley_ductos"')
         self.assertContains(page, 'data-slot="detail_ccdd"')
+
+
+from .forms import ContactForm
+
+
+class ContactFormReasonTests(SimpleTestCase):
+    def form(self, service):
+        return ContactForm(
+            {"name": "Ana", "email": "ana@example.com", "message": "Hola", "service": service}
+        )
+
+    def test_accepts_the_new_general_inquiry_and_job_reasons(self):
+        for reason in ("consulta", "trabajo", "remodelaciones", "otro", ""):
+            form = self.form(reason)
+            self.assertTrue(form.is_valid(), f"{reason!r}: {form.errors}")
+
+    def test_still_rejects_unknown_reasons(self):
+        self.assertFalse(self.form("inventado").is_valid())
+
+
+@NO_MANIFEST
+class GalleryStartTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._media = tempfile.mkdtemp()
+        cls._override = override_settings(MEDIA_ROOT=cls._media)
+        cls._override.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._override.disable()
+        shutil.rmtree(cls._media, ignore_errors=True)
+        super().tearDownClass()
+
+    def photo(self, category):
+        return GalleryImage.objects.create(
+            image=SimpleUploadedFile("a.png", PNG, "image/png"),
+            category=category,
+            placement="gallery",
+        )
+
+    def test_page_opens_on_the_category_with_fewest_photos_and_todos_goes_last(self):
+        for _ in range(3):
+            self.photo("cocinas")
+        self.photo("pavimentos")
+        html = self.client.get("/").content.decode()
+
+        self.assertIn('class="gallery-filter is-active" data-filter="pavimentos"', html)
+        self.assertLess(html.index('data-filter="pavimentos"'), html.index('data-filter="cocinas"'))
+        self.assertLess(html.index('data-filter="cocinas"'), html.index('data-filter="all"'))
+        # Photos of the other categories start hidden so the page loads short.
+        self.assertRegex(html, r'data-category="cocinas"[^>]*\shidden')
+        self.assertNotRegex(html, r'data-category="pavimentos"[^>]*\shidden')
+
+    def test_editor_opens_on_todos(self):
+        self.photo("cocinas")
+        self.photo("pavimentos")
+        get_user_model().objects.create_user("editor", password="pw-test-123")
+        self.client.login(username="editor", password="pw-test-123")
+        html = self.client.get("/mis-fotos/").content.decode()
+        self.assertIn('class="gallery-filter is-active" data-filter="all"', html)
+        self.assertNotRegex(html, r'data-category="[a-z-]+"[^>]*\shidden')
+
+    def test_empty_database_falls_back_to_the_curated_static_photos(self):
+        html = self.client.get("/").content.decode()
+        self.assertIn('class="gallery-item"', html)
+        self.assertIn('data-filter="all"', html)
+
+
+@NO_MANIFEST
+class PanelPagesTests(TestCase):
+    def test_login_page_renders_with_the_form_fields(self):
+        response = self.client.get("/mis-fotos/login/")
+        self.assertContains(response, 'name="username"')
+        self.assertContains(response, 'name="password"')
+        self.assertContains(response, 'name="next"')
+
+    def test_photo_list_renders_and_has_no_inline_handlers(self):
+        get_user_model().objects.create_user("editor", password="pw-test-123")
+        self.client.login(username="editor", password="pw-test-123")
+        response = self.client.get("/mis-fotos/lista/")
+        self.assertContains(response, "Subir una foto")
+        self.assertContains(response, "Todavía no has subido ninguna foto.")
+        # The CSP blocks inline event handlers, so confirmations use data-confirm.
+        self.assertNotContains(response, "onsubmit=")
+
+
+@NO_MANIFEST
+class EditorCategoriesTests(TestCase):
+    def test_editor_offers_every_category_even_when_the_gallery_is_empty(self):
+        get_user_model().objects.create_user("editor", password="pw-test-123")
+        self.client.login(username="editor", password="pw-test-123")
+        html = self.client.get("/mis-fotos/").content.decode()
+        for slug, _label in GalleryImage.CATEGORY_CHOICES:
+            self.assertIn(f'data-filter="{slug}"', html)
+        self.assertIn('class="gallery-filter is-active" data-filter="all"', html)

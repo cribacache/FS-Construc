@@ -1,5 +1,7 @@
 /* Visual editor (/mis-fotos/): the real home page plus editing controls.
-   Blue = editor chrome / editable. Dimmed = not editable. */
+   Blue = editor chrome / editable. Dimmed = not editable.
+   En el editor no se ejecutan las animaciones del sitio público (sin intro,
+   cursor, scroll suave ni efectos de entrada), para poder editar con calma. */
 html[data-edit] {
   --ed: #2563eb;
   --ed-soft: rgba(37, 99, 235, 0.14);
@@ -9,6 +11,7 @@ html[data-edit] {
 html[data-edit] body { padding-top: calc(var(--ed-bar) + var(--ed-legend)); }
 html[data-edit] .site-header { top: calc(var(--ed-bar) + var(--ed-legend)); }
 html[data-edit] .section { scroll-margin-top: 180px; }
+html[data-edit] .grain::after { display: none; }
 
 /* ---- Top bar ---- */
 .edit-bar {
@@ -22,6 +25,7 @@ html[data-edit] .section { scroll-margin-top: 180px; }
   padding: 0 20px;
   background: #0f172a;
   color: #fff;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 0.88rem;
 }
 .edit-bar form { margin: 0; }
@@ -66,6 +70,7 @@ html[data-edit] .section { scroll-margin-top: 180px; }
   background: #eff6ff;
   border-bottom: 1px solid #bfdbfe;
   color: #1e293b;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 0.78rem;
   overflow: hidden;
   white-space: nowrap;
@@ -118,17 +123,12 @@ html:not(.ed-hl-off) .ed-fixed-block::after {
 }
 html:not(.ed-hl-off) .site-header.ed-fixed-block::after { top: 50%; right: 50%; transform: translate(50%, -50%); }
 
-/* The "¿Qué quieres construir?" overlay is shown inline so its photos can be edited. */
-html[data-edit] .build-panel {
-  position: relative;
-  inset: auto;
-  z-index: auto;
-  padding: 60px 24px;
-}
-html[data-edit] .build-panel-close,
-html[data-edit] .hero-prompt { display: none; }
+/* Everything visible while editing: the whole services list is expanded so every
+   description can be edited, and the animated headings are plain text. */
+html[data-edit] .svc-title { opacity: 1; }
+html[data-edit] .svc-desc { grid-template-rows: 1fr; opacity: 1; margin-top: 0.75rem; }
+html[data-edit] .svc-bar { width: 100%; }
 html[data-edit] .contact-form-wrap { pointer-events: none; }
-html[data-edit] .build-option:hover { opacity: 1; }
 
 /* ---- Photo controls ---- */
 [data-slot] { position: relative; }
@@ -146,7 +146,8 @@ html:not(.ed-hl-off) [data-slot] { outline: 2px dashed var(--ed); outline-offset
 .gallery-item:hover > .ed-ctl,
 .gallery-item > .ed-ctl:focus-within { opacity: 1; }
 html:not(.ed-hl-off) .gallery-item { outline: 1.5px solid rgba(37, 99, 235, 0.55); outline-offset: -1.5px; }
-.hero[data-slot] > .ed-ctl { top: 24px; right: 24px; }
+/* The site header covers the top of the hero, so its photo controls sit at the bottom. */
+.hero[data-slot] > .ed-ctl { top: auto; bottom: 24px; right: 24px; z-index: 60; }
 .ed-pill {
   display: inline-block;
   padding: 7px 13px;
@@ -173,8 +174,7 @@ html.ed-dragging .ed-ctl { opacity: 0; }
 
 /* "Agregar foto" tile */
 .gallery-add {
-  aspect-ratio: 4 / 3;
-  border-radius: var(--radius);
+  min-height: 14rem;
   border: 2px dashed var(--ed);
   background: var(--ed-soft);
   color: var(--ed);
@@ -197,22 +197,22 @@ html.ed-dragging .ed-ctl { opacity: 0; }
   border-radius: 14px;
   padding: 0;
   width: min(440px, 92vw);
-  color: var(--text, #222);
+  color: #222;
 }
 .ed-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
-.ed-form { display: flex; flex-direction: column; gap: 14px; padding: 24px; }
+.ed-form { display: flex; flex-direction: column; gap: 14px; padding: 24px; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .ed-form h3 { margin: 0; }
 .ed-field { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 600; }
 .ed-field input,
 .ed-field select {
   padding: 10px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid #d1d5db;
   border-radius: 10px;
   background: #fff;
   font: inherit;
   font-weight: 400;
 }
 .ed-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
-.ed-form .edit-btn { border-color: var(--border); color: #222; }
+.ed-form .edit-btn { border-color: #d1d5db; color: #222; }
 .ed-form .edit-btn-pri { background: var(--ed); border-color: var(--ed); color: #fff; }
 .ed-form .edit-btn-pri:hover { background: #1d4ed8; }

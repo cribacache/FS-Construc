@@ -2,34 +2,43 @@
 {% load static %}
 
 {% block title %}Panel de fotos | FS Construcciones SPA{% endblock %}
+{% block fonts %}<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/panel.css' %}">{% endblock %}
 {% block extra_head %}<meta name="robots" content="noindex">{% endblock %}
 
 {% block content %}
-<div class="dash-auth">
-  <div class="dash-auth-card">
-    <img src="{% static 'img/logo/mark-black.png' %}" alt="FS Construcciones" class="dash-auth-logo">
-    <h1 class="dash-auth-title">Panel de fotos</h1>
-    <p class="dash-auth-lead">Inicia sesión para subir y ordenar las fotos del sitio.</p>
+<main class="auth">
+  <div class="auth-lines" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+  <img class="auth-mark" src="{% static 'img/logo/mark-white.png' %}" alt="" aria-hidden="true">
+
+  <section class="auth-card">
+    <img src="{% static 'img/logo/mark-white.png' %}" alt="FS Construcciones" class="auth-logo">
+    <p class="eyebrow auth-eyebrow">Acceso privado</p>
+    <h1 class="display auth-title">Panel de <em>fotos</em></h1>
+    <p class="auth-lead">Inicia sesión para subir y ordenar las fotos del sitio.</p>
 
     {% if form.errors %}
-      <p class="form-alert dash-auth-error">Usuario o contraseña incorrectos.</p>
+      <p class="auth-error" role="alert">Usuario o contraseña incorrectos.</p>
     {% endif %}
 
-    <form method="post" class="dash-auth-form">
+    <form method="post" class="auth-form">
       {% csrf_token %}
-      <div class="form-row">
-        <label for="id_username">Usuario</label>
-        <input type="text" name="username" id="id_username" autofocus required>
-      </div>
-      <div class="form-row">
-        <label for="id_password">Contraseña</label>
-        <input type="password" name="password" id="id_password" required>
-      </div>
+      <label class="field">
+        <span>Usuario</span>
+        <input type="text" name="username" id="id_username" autofocus required autocomplete="username">
+      </label>
+      <label class="field">
+        <span>Contraseña</span>
+        <input type="password" name="password" id="id_password" required autocomplete="current-password">
+      </label>
       <input type="hidden" name="next" value="{{ next }}">
-      <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      <button type="submit" class="btn btn-primary btn-block">
+        <span>Entrar</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"/></svg>
+      </button>
     </form>
 
-    <a href="{% url 'home' %}" class="dash-auth-back">&larr; Volver al sitio</a>
-  </div>
-</div>
+    <a href="{% url 'home' %}" class="auth-back">&larr; Volver al sitio</a>
+  </section>
+</main>
 {% endblock %}
