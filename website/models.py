@@ -1,5 +1,7 @@
 from django.db import models
 
+VIDEO_EXTENSIONS = (".mp4", ".webm", ".mov", ".m4v", ".ogg")
+
 
 class GalleryImage(models.Model):
     CATEGORY_CHOICES = [
@@ -7,6 +9,7 @@ class GalleryImage(models.Model):
         ("cocinas", "Cocinas y Muebles"),
         ("salas-tv", "Salas de TV"),
         ("pergolas", "Pérgolas y Terrazas"),
+        ("piscinas", "Piscinas"),
         ("espejos", "Paneles y Espejos LED"),
         ("quinchos", "Quinchos y Cocinas Exteriores"),
         ("estructuras", "Estructuras y Carpintería"),
@@ -24,7 +27,7 @@ class GalleryImage(models.Model):
         ("detail_ccdd", "Banner de Corrientes débiles (CCDD)"),
     ]
 
-    image = models.ImageField("Foto", upload_to="gallery/")
+    image = models.FileField("Archivo (foto o video)", upload_to="gallery/")
     title = models.CharField("Título / descripción corta", max_length=120, blank=True)
     category = models.CharField(
         "Categoría", max_length=20, choices=CATEGORY_CHOICES, default="fachadas"
@@ -39,12 +42,17 @@ class GalleryImage(models.Model):
     created_at = models.DateTimeField("Subida el", auto_now_add=True)
 
     class Meta:
-        verbose_name = "Foto"
-        verbose_name_plural = "Fotos"
+        verbose_name = "Foto o video"
+        verbose_name_plural = "Fotos y videos"
         ordering = ["order", "-created_at"]
 
+    @property
+    def is_video(self):
+        name = (self.image.name or "").lower()
+        return name.endswith(VIDEO_EXTENSIONS)
+
     def __str__(self):
-        return self.title or f"Foto #{self.pk}"
+        return self.title or f"Archivo #{self.pk}"
 
 
 class ContactMessage(models.Model):

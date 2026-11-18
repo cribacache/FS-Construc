@@ -9,6 +9,7 @@
   var drag = null; // { type: "slot" | "tile", id, slot }
   var root = document.documentElement;
   var DRAG_TYPE = "application/x-fs-photo";
+  var MEDIA_ACCEPT = "image/*,video/mp4,video/webm,video/quicktime,video/ogg";
 
   function setStatus(message, isError) {
     statusEl.textContent = message;
@@ -134,7 +135,7 @@
       if (!node.hasAttribute("data-multiline")) pasted = pasted.replace(/\s*\n\s*/g, " ");
       document.execCommand("insertText", false, pasted);
     });
-    // Never let a dragged photo (or file) be dropped into the text.
+    // Never let a dragged photo/video (or file) be dropped into the text.
     node.addEventListener("dragover", function (event) { if (drag) event.preventDefault(); });
     node.addEventListener("drop", function (event) {
       if (drag || (event.dataTransfer && event.dataTransfer.files.length)) {
@@ -225,7 +226,7 @@
     root.classList.toggle("ed-hl-off", !event.target.checked);
   });
 
-  // ---------- Photo drag & drop ----------
+  // ---------- Photo / Video drag & drop ----------
 
   function startDrag(event, payload, source) {
     drag = payload;
@@ -247,7 +248,7 @@
   function makeGrip(payloadFn, source) {
     var grip = el("span", "ed-pill ed-grip", "⠿ Mover");
     grip.setAttribute("draggable", "true");
-    grip.setAttribute("title", "Arrastra para mover esta foto");
+    grip.setAttribute("title", "Arrastra para mover este archivo");
     grip.addEventListener("dragstart", function (event) { startDrag(event, payloadFn(), source); });
     grip.addEventListener("dragend", endDrag);
     grip.addEventListener("click", function (event) { event.stopPropagation(); });
@@ -271,11 +272,11 @@
     });
   }
 
-  // ---------- Fixed photo slots (portada, panel, banners) ----------
+  // ---------- Fixed media slots (portada, panel, banners) ----------
 
   var slotFile = el("input");
   slotFile.type = "file";
-  slotFile.accept = "image/*";
+  slotFile.accept = MEDIA_ACCEPT;
   slotFile.hidden = true;
   document.body.appendChild(slotFile);
   var pendingSlot = null;
@@ -286,7 +287,7 @@
     var slot = pendingSlot;
     var data = new FormData();
     data.append("image", file);
-    run("Subiendo foto", function () { return post("/mis-fotos/api/slot/" + slot + "/upload/", data); }, true);
+    run("Subiendo archivo", function () { return post("/mis-fotos/api/slot/" + slot + "/upload/", data); }, true);
     slotFile.value = "";
   });
 
@@ -295,7 +296,7 @@
     var photoId = parseInt(slotEl.getAttribute("data-photo-id"), 10);
     var controls = el("div", "ed-ctl");
     if (photoId) controls.appendChild(makeGrip(function () { return { type: "slot", id: photoId, slot: slot }; }, slotEl));
-    var change = el("span", "ed-pill", photoId ? "📷 Cambiar foto" : "📷 Subir foto");
+    var change = el("span", "ed-pill", photoId ? "📷 Cambiar foto/video" : "📷 Subir foto/video");
     change.setAttribute("role", "button");
     change.addEventListener("click", stop(function () {
       pendingSlot = slot;
@@ -306,7 +307,7 @@
 
     dropTarget(slotEl, function (payload) {
       if (payload.type === "slot" && payload.slot === slot) return;
-      run("Moviendo foto", function () {
+      run("Moviendo archivo", function () {
         return post("/mis-fotos/api/move/", { photo: payload.id, to_slot: slot });
       }, true);
     });
@@ -335,11 +336,17 @@
     controls.appendChild(makeGrip(function () { return { type: "tile", id: id }; }, tile));
     var del = el("span", "ed-pill ed-del", "×");
     del.setAttribute("role", "button");
-    del.setAttribute("title", "Eliminar foto");
-    del.setAttribute("aria-label", "Eliminar foto");
+    del.setAttribute("title", "Eliminar archivo");
+    del.setAttribute("aria-label", "Eliminar archivo");
     del.addEventListener("click", stop(function () {
-      if (!window.confirm("¿Eliminar esta foto? No se puede deshacer.")) return;
-      run("Eliminando foto", function () {
+      if (!window.confirm("¿Eliminar este archivo? No se puede deshacer.")) return;
+      var video = tile.querySelector("video");
+      if (video) {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      }
+      run("Eliminando archivo", function () {
         return post("/mis-fotos/api/photo/" + id + "/delete/");
       }, false).then(function () {
         if (!statusEl.classList.contains("is-error")) tile.remove();
@@ -351,7 +358,7 @@
     dropTarget(tile, function (payload) {
       if (payload.id === id) return;
       if (payload.type === "slot") {
-        run("Moviendo foto", function () {
+        run("Moviendo archivo", function () {
           return post("/mis-fotos/api/move/", { photo: payload.id, with: id });
         }, true);
         return;
@@ -370,11 +377,11 @@
     });
   });
 
-  // ---------- Add photo ----------
+  // ---------- Add photo / video ----------
 
   var dialog = el("dialog", "ed-dialog");
   var form = el("form", "ed-form");
-  form.appendChild(el("h3", "", "Agregar foto a Proyectos"));
+  form.appendChild(el("h3", "", "Agregar foto o video a Proyectos"));
 
   function field(labelText, control) {
     var label = el("label", "ed-field");
@@ -385,7 +392,7 @@
 
   var fileInput = el("input");
   fileInput.type = "file";
-  fileInput.accept = "image/*";
+  fileInput.accept = MEDIA_ACCEPT;
   fileInput.required = true;
   var categorySelect = el("select");
   document.querySelectorAll(".gallery-filter").forEach(function (btn) {
@@ -399,13 +406,13 @@
   titleInput.maxLength = 120;
   titleInput.placeholder = "Ej: Fachada casa Vitacura";
 
-  form.appendChild(field("Foto", fileInput));
+  form.appendChild(field("Foto o video (MP4 / WebM / MOV)", fileInput));
   form.appendChild(field("Categoría", categorySelect));
   form.appendChild(field("Título (opcional)", titleInput));
   var actions = el("div", "ed-form-actions");
   var cancel = el("button", "edit-btn ed-cancel", "Cancelar");
   cancel.type = "button";
-  var submit = el("button", "edit-btn edit-btn-pri", "Subir foto");
+  var submit = el("button", "edit-btn edit-btn-pri", "Subir archivo");
   submit.type = "submit";
   actions.appendChild(cancel);
   actions.appendChild(submit);
@@ -421,13 +428,13 @@
     data.append("category", categorySelect.value);
     data.append("title", titleInput.value);
     dialog.close();
-    run("Subiendo foto", function () { return post("/mis-fotos/api/gallery/upload/", data); }, true);
+    run("Subiendo archivo", function () { return post("/mis-fotos/api/gallery/upload/", data); }, true);
   });
 
   var addTile = el("button", "gallery-add");
   addTile.type = "button";
   addTile.appendChild(el("span", "gallery-add-icon", "+"));
-  addTile.appendChild(el("span", "gallery-add-title", "Agregar foto"));
+  addTile.appendChild(el("span", "gallery-add-title", "Agregar foto o video"));
   addTile.addEventListener("click", function () {
     var active = document.querySelector(".gallery-filter.is-active");
     var current = active ? active.getAttribute("data-filter") : "all";

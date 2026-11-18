@@ -150,7 +150,7 @@
     });
   }
 
-  // Última línea del titular en cursiva azul; si el titular es de una sola línea,
+  // Última línea del titular en acento azul; si el titular es de una sola línea,
   // solo su última palabra.
   function accentLastLine(inners, lines) {
     if (!inners.length) return;
@@ -273,6 +273,8 @@
   var header = $("#siteHeader");
   var menu = $("#mobileMenu");
   var menuButton = $("#menuBtn");
+  var mobileProjectsToggle = $("#mobileProjectsToggle");
+  var mobileProjectsGroup = $("#mobileProjectsGroup");
 
   function openMenu() {
     if (!menu) return;
@@ -283,6 +285,10 @@
   }
 
   function closeMenu() {
+    if (mobileProjectsGroup && mobileProjectsGroup.classList.contains("is-open")) {
+      mobileProjectsGroup.classList.remove("is-open");
+      if (mobileProjectsToggle) mobileProjectsToggle.setAttribute("aria-expanded", "false");
+    }
     if (!menu || !menu.classList.contains("is-open")) return;
     menu.classList.remove("is-open");
     menu.setAttribute("aria-hidden", "true");
@@ -294,6 +300,12 @@
   if (menu) {
     var menuClose = $("#menuClose");
     if (menuClose) menuClose.addEventListener("click", closeMenu);
+  }
+  if (mobileProjectsToggle && mobileProjectsGroup) {
+    mobileProjectsToggle.addEventListener("click", function () {
+      var isOpen = mobileProjectsGroup.classList.toggle("is-open");
+      mobileProjectsToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
   }
 
   var hero = $("#inicio");
@@ -350,7 +362,7 @@
   update();
 
   /* ------------------------------------------------------------------ */
-  /* Servicios: lista + foto fija                                         */
+  /* Servicios: lista + foto/video fijo                                   */
   /* ------------------------------------------------------------------ */
   safe(function () {
     var items = $$(".svc-item");
@@ -364,7 +376,13 @@
       if (index === active) return;
       active = index;
       items.forEach(function (item, i) { item.classList.toggle("is-active", i === index); });
-      images.forEach(function (image, i) { image.classList.toggle("is-active", i === index); });
+      images.forEach(function (media, i) {
+        var isCurrent = i === index;
+        media.classList.toggle("is-active", isCurrent);
+        if (isCurrent && media.tagName === "VIDEO" && media.paused) {
+          media.play().catch(function () {});
+        }
+      });
       captions.forEach(function (caption, i) { caption.classList.toggle("is-active", i === index); });
       if (count) count.textContent = (index < 9 ? "0" : "") + (index + 1);
     }
@@ -377,7 +395,7 @@
   });
 
   /* ------------------------------------------------------------------ */
-  /* Portafolio: filtros, "ver más" y visor                               */
+  /* Portafolio: filtros, "ver más" y visor (fotos y videos en loop)      */
   /* ------------------------------------------------------------------ */
   var galleryGrid = $(".gallery-grid");
   var applyFilter = function () {};
@@ -410,6 +428,8 @@
         var show = match && (expanded || shown < PREVIEW);
         item.hidden = !show;
         if (!show) return;
+        var video = item.querySelector("video");
+        if (video && video.paused) video.play().catch(function () {});
         item.setAttribute("data-ratio", RATIOS[Math.floor(shown / columns) % RATIOS.length]);
         if (animate && ANIM) {
           item.classList.remove("is-pop");
@@ -470,6 +490,7 @@
     /* Visor a pantalla completa */
     var box = $("#lightbox");
     var image = $("#lightboxImg");
+    var video = $("#lightboxVideo");
     var titleNode = $("#lightboxTitle");
     var categoryNode = $("#lightboxCat");
     var currentItem = null;
@@ -479,22 +500,53 @@
       return $$(".gallery-item", galleryGrid).filter(function (item) { return !item.hidden; });
     }
 
+    function resetVideo() {
+      if (!video) return;
+      video.pause();
+      video.hidden = true;
+      video.removeAttribute("src");
+      video.load();
+    }
+
     function show(item) {
       currentItem = item;
-      image.src = item.getAttribute("data-full");
-      image.alt = item.getAttribute("data-title") || "";
+      var src = item.getAttribute("data-full");
+      var isVideo = item.getAttribute("data-kind") === "video";
+      if (isVideo && video) {
+        image.hidden = true;
+        image.src = "";
+        video.hidden = false;
+        video.src = src;
+        video.play().catch(function () {});
+      } else {
+        resetVideo();
+        image.hidden = false;
+        image.src = src;
+        image.alt = item.getAttribute("data-title") || "";
+      }
       titleNode.textContent = item.getAttribute("data-title") || "";
       categoryNode.textContent = item.getAttribute("data-label") || "";
     }
 
+    function triggerOpen() {
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(function () {
+          if (!box.hidden) box.classList.add("is-open");
+        });
+      });
+    }
+
     function open(item) {
       window.clearTimeout(closeTimer);
+      $$("video", galleryGrid).forEach(function (v) { v.pause(); });
       show(item);
       box.hidden = false;
       root.classList.add("no-scroll");
-      window.requestAnimationFrame(function () {
-        window.requestAnimationFrame(function () { box.classList.add("is-open"); });
-      });
+      if (item.getAttribute("data-kind") !== "video" && image.decode) {
+        image.decode().then(triggerOpen, triggerOpen);
+      } else {
+        triggerOpen();
+      }
     }
 
     function close() {
@@ -504,7 +556,11 @@
       closeTimer = window.setTimeout(function () {
         box.hidden = true;
         image.src = "";
-      }, 420);
+        resetVideo();
+        $$(".gallery-item:not([hidden]) video", galleryGrid).forEach(function (v) {
+          v.play().catch(function () {});
+        });
+      }, 320);
     }
 
     function step(direction) {
@@ -533,7 +589,7 @@
   });
 
   /* ------------------------------------------------------------------ */
-  /* Contacto: cotizar / consultas y trabajo, y envío por WhatsApp        */
+  /* Contacto: cotizar / consultas y trabajo, CV y envío por WhatsApp     */
   /* ------------------------------------------------------------------ */
   var setContactMode = function () {};
 
@@ -544,9 +600,37 @@
     var select = form.querySelector("select");
     var message = form.querySelector("textarea");
     var label = $("#serviceLabel");
+    var cvRow = $("#cvRow");
+    var cvPicker = $("#cvPicker");
+    var cvInput = form.querySelector("input[type='file']");
+    var cvFileName = $("#cvFileName");
+    var cvClear = $("#cvClear");
+    var defaultCvText = cvFileName ? cvFileName.textContent : "Adjuntar CV (PDF o Word)";
     var JOB = ["consulta", "trabajo"];
     var quotePlaceholder = message ? message.getAttribute("placeholder") || "" : "";
     var contactPlaceholder = "Escribe tu consulta o cuéntanos cómo te gustaría sumarte al equipo…";
+
+    function updateCvLabel() {
+      if (!cvInput || !cvFileName) return;
+      var hasFile = !!(cvInput.files && cvInput.files.length);
+      cvFileName.textContent = hasFile ? cvInput.files[0].name : defaultCvText;
+      if (cvPicker) cvPicker.classList.toggle("has-file", hasFile);
+      if (cvClear) cvClear.hidden = !hasFile;
+    }
+
+    function clearCv() {
+      if (!cvInput) return;
+      cvInput.value = "";
+      updateCvLabel();
+    }
+
+    if (cvInput) cvInput.addEventListener("change", updateCvLabel);
+    if (cvClear) {
+      cvClear.addEventListener("click", function (event) {
+        event.preventDefault();
+        clearCv();
+      });
+    }
 
     setContactMode = function (mode) {
       var isContact = mode === "contacto";
@@ -557,6 +641,8 @@
       });
       if (label) label.textContent = isContact ? "Motivo del mensaje" : "Servicio de interés";
       if (message) message.setAttribute("placeholder", isContact ? contactPlaceholder : quotePlaceholder);
+      if (cvRow) cvRow.hidden = !isContact;
+      if (!isContact) clearCv();
       if (!select) return;
       Array.prototype.forEach.call(select.options, function (option) {
         var isJob = JOB.indexOf(option.value) !== -1;
@@ -586,6 +672,9 @@
         var text = "Hola FS Construcciones, soy " + (value("name") || "un visitante del sitio") + ".";
         if (service) text += "\nInterés: " + service;
         if (value("message")) text += "\n" + value("message");
+        if (cvInput && cvInput.files && cvInput.files.length) {
+          text += "\nAdjunto mi CV: " + cvInput.files[0].name;
+        }
         var contact = [value("phone"), value("email")].filter(Boolean).join(" / ");
         if (contact) text += "\nContacto: " + contact;
         window.open("https://wa.me/" + whatsapp.getAttribute("data-wa") + "?text=" + encodeURIComponent(text), "_blank", "noopener");
@@ -608,8 +697,9 @@
     event.preventDefault();
     var mode = link.getAttribute("data-contact-mode");
     if (mode) setContactMode(mode);
-    var filter = link.getAttribute("data-gallery-filter");
+    var filter = link.getAttribute("data-gallery-filter") || link.getAttribute("data-nav-filter");
     if (filter) applyFilter(filter);
+    if (link.blur) link.blur();
     closeMenu();
     scrollToElement(node);
     if (window.history && window.history.replaceState) window.history.replaceState(null, "", hash);
@@ -620,67 +710,5 @@
     closeMenu();
     var box = $("#lightbox");
     if (box && box._close) box._close();
-  });
-
-  /* ------------------------------------------------------------------ */
-  /* Cursor personalizado y botones magnéticos                            */
-  /* ------------------------------------------------------------------ */
-  safe(function () {
-    if (!ANIM || !FINE) return;
-
-    var ring = make("div", "cursor-ring");
-    var ringLabel = make("span");
-    var dot = make("div", "cursor-dot");
-    ring.setAttribute("data-mode", "");
-    ring.appendChild(ringLabel);
-    dot.appendChild(make("span"));
-    document.body.appendChild(ring);
-    document.body.appendChild(dot);
-    root.classList.add("cursor-on");
-
-    var mx = -100, my = -100, rx = -100, ry = -100;
-    var seen = false;
-    var last = "";
-
-    window.addEventListener("mousemove", function (event) {
-      mx = event.clientX;
-      my = event.clientY;
-      if (!seen) { seen = true; rx = mx; ry = my; }
-      root.classList.add("cursor-live");
-
-      var node = event.target.closest ? event.target.closest("[data-cursor], a, button, select, input, textarea, label") : null;
-      var mode = "";
-      var text = "";
-      if (node) {
-        text = node.getAttribute("data-cursor") || "";
-        mode = text ? "label" : "hover";
-      }
-      var key = mode + ":" + text;
-      if (key !== last) {
-        last = key;
-        ring.setAttribute("data-mode", mode);
-        ringLabel.textContent = text;
-      }
-    }, { passive: true });
-
-    root.addEventListener("mouseleave", function () { root.classList.remove("cursor-live"); });
-
-    (function loop() {
-      rx += (mx - rx) * 0.22;
-      ry += (my - ry) * 0.22;
-      dot.style.transform = "translate3d(" + mx + "px," + my + "px,0)";
-      ring.style.transform = "translate3d(" + rx + "px," + ry + "px,0)";
-      window.requestAnimationFrame(loop);
-    })();
-
-    $$(".magnetic").forEach(function (node) {
-      node.addEventListener("mousemove", function (event) {
-        var box = node.getBoundingClientRect();
-        var x = (event.clientX - box.left - box.width / 2) * 0.35;
-        var y = (event.clientY - box.top - box.height / 2) * 0.35;
-        node.style.transform = "translate(" + x + "px," + y + "px)";
-      });
-      node.addEventListener("mouseleave", function () { node.style.transform = ""; });
-    });
   });
 })();
