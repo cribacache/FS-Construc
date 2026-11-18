@@ -267,6 +267,13 @@
                 <div>
                   <p>{% et "svc" forloop.counter0 "description" %}{{ service.description }}{% endet %}</p>
                   {% if service.slug %}<a href="#{{ service.slug }}" class="eyebrow service-link">Ver detalle <span aria-hidden="true">&darr;</span></a>{% endif %}
+                  <div class="svc-mobile-media">
+                    {% if service.is_video %}
+                    <video src="{{ service.image_url }}" muted loop playsinline preload="metadata"></video>
+                    {% else %}
+                    <img src="{{ service.image_url }}" alt="{{ service.title }}" loading="lazy">
+                    {% endif %}
+                  </div>
                 </div>
               </div>
             </div>
