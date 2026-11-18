@@ -29,9 +29,9 @@
   </form>
 </div>
 <div class="edit-legend">
-  <span class="lg-item"><i class="lg-sample lg-sample-edit" aria-hidden="true">Aa</i> <b>Editable:</b> haz clic en un texto con borde punteado azul para escribir, o usa los botones azules de las fotos.</span>
+  <span class="lg-item"><i class="lg-sample lg-sample-edit" aria-hidden="true">Aa</i> <b>Editable:</b> haz clic en un texto con borde punteado azul para escribir, o usa los botones azules de las fotos y videos.</span>
   <span class="lg-item"><i class="lg-sample lg-sample-fixed" aria-hidden="true">Aa</i> <b>No editable:</b> lo que se ve apagado (menú, formulario, datos de contacto).</span>
-  <span class="lg-item lg-note">Las fotos se guardan al instante; los textos con «Guardar cambios». Las animaciones se ven solo en el sitio público.</span>
+  <span class="lg-item lg-note">Las fotos y videos se guardan al instante; los textos con «Guardar cambios». Las animaciones se ven solo en el sitio público.</span>
   <label class="lg-toggle"><input type="checkbox" id="editHighlight" checked> Resaltar</label>
 </div>
 {% endif %}
@@ -52,9 +52,19 @@
     </a>
     <nav class="main-nav" aria-label="Principal">
       <a href="#servicios" class="eyebrow">Servicios</a>
-      <a href="#estudio" class="eyebrow">Estudio</a>
-      <a href="#portafolio" class="eyebrow">Proyectos</a>
-      <a href="#contacto" class="eyebrow" data-contact-mode="contacto">Contacto</a>
+      <div class="nav-dropdown" id="navProjectsDropdown">
+        <a href="#portafolio" class="eyebrow nav-dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+          <span>Proyectos</span>
+          <svg class="nav-dropdown-chevron" viewBox="0 0 12 8" width="10" height="7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
+        </a>
+        <div class="nav-dropdown-menu" role="menu" aria-label="Categorías de proyectos">
+          {% for cat in gallery_categories %}
+          <a href="#portafolio" class="nav-dropdown-link" role="menuitem" data-nav-filter="{{ cat.slug }}">{{ cat.label }}</a>
+          {% endfor %}
+          <a href="#portafolio" class="nav-dropdown-link nav-dropdown-link--all" role="menuitem" data-nav-filter="all">Ver todos los proyectos</a>
+        </div>
+      </div>
+      <a href="#contacto" class="eyebrow" data-contact-mode="contacto">Trabaja con nosotros</a>
     </nav>
     <a href="#contacto" class="eyebrow header-cta" data-contact-mode="cotizar">Cotizar</a>
     <button type="button" class="menu-btn" id="menuBtn" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobileMenu">
@@ -64,22 +74,78 @@
 </header>
 
 <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
-  <button type="button" class="menu-close" id="menuClose" aria-label="Cerrar menú">
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-  </button>
+  <img class="mobile-menu-mark" src="{% static 'img/logo/mark-white.png' %}" alt="" aria-hidden="true">
+
+  <div class="mobile-menu-head">
+    <a href="#inicio" class="logo">
+      <img src="{% static 'img/logo/mark-white.png' %}" alt="FS Construcciones" class="logo-mark-img">
+      <span class="eyebrow mobile-logo-text">FS Construcciones</span>
+    </a>
+    <button type="button" class="menu-close" id="menuClose" aria-label="Cerrar menú">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
   <nav class="mobile-menu-links" aria-label="Menú móvil">
-    <a href="#servicios">Servicios</a>
-    <a href="#estudio">Estudio</a>
-    <a href="#portafolio">Proyectos</a>
-    <a href="#contacto" data-contact-mode="contacto">Contacto</a>
+    <a href="#servicios" class="mobile-nav-item">
+      <span class="eyebrow mobile-nav-num">01</span>
+      <span class="mobile-nav-label">Servicios</span>
+    </a>
+
+    <div class="mobile-nav-group mobile-nav-item" id="mobileProjectsGroup">
+      <div class="mobile-nav-row">
+        <a href="#portafolio" class="mobile-nav-title">
+          <span class="eyebrow mobile-nav-num">02</span>
+          <span class="mobile-nav-label">Proyectos</span>
+        </a>
+        <button type="button" class="mobile-sub-toggle" id="mobileProjectsToggle" aria-expanded="false" aria-controls="mobileProjectsSub" aria-label="Desglosar categorías de proyectos">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+      <div class="mobile-sub-links" id="mobileProjectsSub">
+        <div>
+          <div class="mobile-sub-grid">
+            {% for cat in gallery_categories %}
+            <a href="#portafolio" class="eyebrow mobile-sub-link" data-nav-filter="{{ cat.slug }}">{{ cat.label }}</a>
+            {% endfor %}
+          </div>
+          <a href="#portafolio" class="eyebrow mobile-sub-link mobile-sub-link--all" data-nav-filter="all">Ver todos los proyectos &rarr;</a>
+        </div>
+      </div>
+    </div>
+
+    <a href="#contacto" class="mobile-nav-item" data-contact-mode="contacto">
+      <span class="eyebrow mobile-nav-num">03</span>
+      <span class="mobile-nav-label">Trabaja con nosotros</span>
+    </a>
   </nav>
+
+  <div class="mobile-menu-foot">
+    <a href="#contacto" class="pill pill-solid mobile-menu-cta" data-contact-mode="cotizar">
+      <span>Cotizar proyecto</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"/></svg>
+    </a>
+    <div class="mobile-menu-meta">
+      <a href="tel:+56930689483" class="eyebrow mobile-menu-phone">+56 9 3068 9483</a>
+      <div class="mobile-menu-socials">
+        <a class="social-btn" href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener" aria-label="Instagram">{% include "website/icons/instagram.svg" %}</a>
+        <a class="social-btn" href="https://wa.me/56930689483" target="_blank" rel="noopener" aria-label="WhatsApp">{% include "website/icons/whatsapp.svg" %}</a>
+        <a class="social-btn" href="https://www.tiktok.com/@fs.construcciones" target="_blank" rel="noopener" aria-label="TikTok">{% include "website/icons/tiktok.svg" %}</a>
+        <a class="social-btn" href="mailto:contacto@fsconstrucciones.cl" aria-label="Correo">{% include "website/icons/mail.svg" %}</a>
+      </div>
+    </div>
+  </div>
 </div>
 
 <main class="grain">
   <!-- PORTADA -->
   <section id="inicio" class="hero"{% if edit_mode %} data-slot="hero_bg" data-photo-id="{{ slot_ids.hero_bg }}"{% endif %}>
     <div class="hero-media">
+      {% if hero_bg_url and hero_bg_is_video %}
+      <video class="hero-video" src="{{ hero_bg_url }}" autoplay muted loop playsinline></video>
+      {% else %}
       <img class="hero-img" src="{% if hero_bg_url %}{{ hero_bg_url }}{% else %}{% static fallback_static.hero_bg %}{% endif %}" alt="" fetchpriority="high">
+      {% endif %}
     </div>
     <div class="hero-shade" aria-hidden="true"></div>
     <img class="hero-mark" src="{% static 'img/logo/mark-white.png' %}" alt="" aria-hidden="true">
@@ -117,7 +183,11 @@
           <a href="#portafolio" class="choose-card" data-cursor="Ver">
             <div class="choose-frame">
               <div class="imgrev choose-media"{% if edit_mode %} data-slot="build_project" data-photo-id="{{ slot_ids.build_project }}"{% endif %}>
+                {% if build_project_url and build_project_is_video %}
+                <video src="{{ build_project_url }}" autoplay muted loop playsinline></video>
+                {% else %}
                 <img src="{% if build_project_url %}{{ build_project_url }}{% else %}{% static fallback_static.build_project %}{% endif %}" alt="" loading="lazy">
+                {% endif %}
               </div>
             </div>
             <div class="choose-body">
@@ -134,7 +204,11 @@
           <a href="#servicios" class="choose-card" data-cursor="Ver">
             <div class="choose-frame">
               <div class="imgrev choose-media"{% if edit_mode %} data-slot="build_remodel" data-photo-id="{{ slot_ids.build_remodel }}"{% endif %}>
+                {% if build_remodel_url and build_remodel_is_video %}
+                <video src="{{ build_remodel_url }}" autoplay muted loop playsinline></video>
+                {% else %}
                 <img src="{% if build_remodel_url %}{{ build_remodel_url }}{% else %}{% static fallback_static.build_remodel %}{% endif %}" alt="" loading="lazy">
+                {% endif %}
               </div>
             </div>
             <div class="choose-body">
@@ -151,7 +225,11 @@
           <a href="#contacto" class="choose-card" data-cursor="Ver" data-contact-mode="cotizar">
             <div class="choose-frame">
               <div class="imgrev choose-media"{% if edit_mode %} data-slot="build_quote" data-photo-id="{{ slot_ids.build_quote }}"{% endif %}>
+                {% if build_quote_url and build_quote_is_video %}
+                <video src="{{ build_quote_url }}" autoplay muted loop playsinline></video>
+                {% else %}
                 <img src="{% if build_quote_url %}{{ build_quote_url }}{% else %}{% static fallback_static.build_quote %}{% endif %}" alt="" loading="lazy">
+                {% endif %}
               </div>
             </div>
             <div class="choose-body">
@@ -189,6 +267,13 @@
                 <div>
                   <p>{% et "svc" forloop.counter0 "description" %}{{ service.description }}{% endet %}</p>
                   {% if service.slug %}<a href="#{{ service.slug }}" class="eyebrow service-link">Ver detalle <span aria-hidden="true">&darr;</span></a>{% endif %}
+                  <div class="svc-mobile-media">
+                    {% if service.is_video %}
+                    <video src="{{ service.image_url }}" muted loop playsinline preload="metadata"></video>
+                    {% else %}
+                    <img src="{{ service.image_url }}" alt="{{ service.title }}" loading="lazy">
+                    {% endif %}
+                  </div>
                 </div>
               </div>
             </div>
@@ -198,7 +283,11 @@
         <div class="svc-stage" aria-hidden="true">
           <div class="svc-frame">
             {% for service in services %}
-            <img class="svc-img{% if forloop.first %} is-active{% endif %}" src="{{ service.image_url }}" alt="" loading="lazy" data-index="{{ forloop.counter0 }}">
+              {% if service.is_video %}
+              <video class="svc-img svc-video{% if forloop.first %} is-active{% endif %}" src="{{ service.image_url }}" autoplay muted loop playsinline data-index="{{ forloop.counter0 }}"></video>
+              {% else %}
+              <img class="svc-img{% if forloop.first %} is-active{% endif %}" src="{{ service.image_url }}" alt="" loading="lazy" data-index="{{ forloop.counter0 }}">
+              {% endif %}
             {% endfor %}
             <div class="svc-caption">
               <div class="svc-cap-titles">
@@ -225,7 +314,11 @@
       <div class="tech-grid">
         <div class="tech-left">
           <div class="imgrev tech-media"{% if edit_mode %} data-slot="{{ detail.slot }}" data-photo-id="{{ detail.photo_id }}"{% endif %}>
+            {% if detail.bg_url and detail.bg_is_video %}
+            <video src="{{ detail.bg_url }}" autoplay muted loop playsinline></video>
+            {% else %}
             <img src="{% if detail.bg_url %}{{ detail.bg_url }}{% else %}{% static detail.hero_image %}{% endif %}" alt="{{ detail.title }}" loading="lazy">
+            {% endif %}
           </div>
           {% for paragraph in detail.intro %}
           <p class="tech-intro" data-reveal>{% et "det" detail.slug "intro" forloop.counter0 %}{{ paragraph }}{% endet %}</p>
@@ -245,34 +338,12 @@
   </section>
   {% endfor %}
 
-  <!-- 05 ESTUDIO -->
-  <section id="estudio" class="section dark studio">
-    <img class="studio-mark" src="{% static 'img/logo/mark-white.png' %}" alt="" aria-hidden="true">
-    <div class="wrap">
-      <p class="eyebrow studio-eyebrow"><span class="sec-num">05</span> — Estudio</p>
-      <h2 class="display studio-title" id="studioTitle">{% et "intro" "title" %}Construimos y renovamos espacios pensados para durar.{% endet %}</h2>
-      <div class="studio-grid">
-        <div class="studio-media" id="studioMedia">
-          <img src="{{ studio_image_url }}" alt="Interior diseñado y construido por FS Construcciones" loading="lazy">
-        </div>
-        <div class="studio-side">
-          <p class="studio-lead" data-reveal>{% et "intro" "lead" %}Nos dedicamos a conocer a fondo las necesidades y gustos de nuestros clientes
-            para entregarles un proyecto que combine funcionalidad, calidad y estilo, cuidando
-            cada detalle de principio a fin.{% endet %}</p>
-          <div class="studio-stats">
-            <div><p class="display stat"><span data-count="{{ services|length }}">{{ services|length }}</span></p><p class="eyebrow">Especialidades</p></div>
-            <div><p class="display stat"><span data-count="100">100</span>%</p><p class="eyebrow">A medida</p></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- 06 POR QUÉ ELEGIRNOS -->
+  <!-- 05 POR QUÉ ELEGIRNOS -->
   <section id="nosotros" class="section why">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow sec-eyebrow" data-reveal><span class="sec-num">06</span> — {% et "about" "eyebrow" %}Por qué elegirnos{% endet %}</p>
+        <p class="eyebrow sec-eyebrow" data-reveal><span class="sec-num">05</span> — {% et "about" "eyebrow" %}Por qué elegirnos{% endet %}</p>
         <h2 class="display sec-title" data-lines>{% et "about" "title" %}Compromiso en<br>cada detalle{% endet %}</h2>
         <p class="sec-lead" data-reveal>{% et "about" "lead" %}Transformamos ideas en espacios funcionales, duraderos y con terminaciones de
           primer nivel.{% endet %}</p>
@@ -293,35 +364,12 @@
     </div>
   </section>
 
-  <!-- 07 CÓMO TRABAJAMOS -->
-  <section id="proceso" class="section process">
-    <div class="wrap">
-      <div class="sec-head">
-        <p class="eyebrow sec-eyebrow" data-reveal><span class="sec-num">07</span> — {% et "process" "eyebrow" %}Cómo trabajamos{% endet %}</p>
-        <h2 class="display sec-title" data-lines>{% et "process" "title" %}De la idea<br>a la entrega{% endet %}</h2>
-      </div>
-      <div class="process-track">
-        <div class="process-line" aria-hidden="true"></div>
-        <div class="process-fill" id="processFill" aria-hidden="true"></div>
-        <div class="process-grid">
-          {% for step in process_steps %}
-          <div class="process-step" data-reveal data-stagger="{{ forloop.counter0 }}">
-            <span class="process-dot" aria-hidden="true"></span>
-            <p class="eyebrow process-number">Etapa 0{{ forloop.counter }}</p>
-            <h3 class="display">{% et "process" forloop.counter0 "title" %}{{ step.title }}{% endet %}</h3>
-            <p class="process-desc">{% et "process" forloop.counter0 "description" %}{{ step.description }}{% endet %}</p>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- 08 PORTAFOLIO -->
+  <!-- 06 PORTAFOLIO -->
   <section id="portafolio" class="section portfolio">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow sec-eyebrow" data-reveal><span class="sec-num">08</span> — {% et "projects" "eyebrow" %}Nuestro trabajo{% endet %}</p>
+        <p class="eyebrow sec-eyebrow" data-reveal><span class="sec-num">06</span> — {% et "projects" "eyebrow" %}Nuestro trabajo{% endet %}</p>
         <h2 class="display sec-title" data-lines>{% et "projects" "title" %}Proyectos<br>ejecutados{% endet %}</h2>
         <p class="sec-lead" data-reveal>{% et "projects" "lead" %}Una muestra real de obras ejecutadas por FS Construcciones SPA.{% endet %}</p>
       </div>
@@ -336,8 +384,14 @@
       <div class="gallery-grid" id="galleryGrid">
         {% for item in gallery %}
         {% with label=item.get_category_display %}
-        <button type="button" class="gallery-item" data-id="{{ item.pk }}" data-category="{{ item.category }}" data-full="{{ item.image.url }}" data-title="{{ item.title|default:label }}" data-label="{{ label }}" data-cursor="Ver"{% if gallery_start != "all" and item.category != gallery_start %} hidden{% endif %}>
-          <span class="gallery-thumb"><img src="{{ item.image.url }}" alt="{{ item.title|default:label }}" loading="lazy"></span>
+        <button type="button" class="gallery-item" data-id="{{ item.pk }}" data-category="{{ item.category }}" data-full="{{ item.image.url }}" data-kind="{% if item.is_video %}video{% else %}image{% endif %}" data-title="{{ item.title|default:label }}" data-label="{{ label }}" data-cursor="Ver"{% if gallery_start != "all" and item.category != gallery_start %} hidden{% endif %}>
+          <span class="gallery-thumb">
+            {% if item.is_video %}
+            <video src="{{ item.image.url }}" autoplay muted loop playsinline preload="metadata"></video>
+            {% else %}
+            <img src="{{ item.image.url }}" alt="{{ item.title|default:label }}" loading="lazy">
+            {% endif %}
+          </span>
           <span class="gallery-meta">
             <span class="display gallery-title">{{ item.title|default:label }}</span>
             {% if item.title and item.title != label %}<span class="eyebrow gallery-cat">{{ label }}</span>{% endif %}
@@ -356,14 +410,15 @@
     </div>
   </section>
 
-  <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Visor de fotos">
+  <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Visor de proyectos">
     <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Cerrar">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
-    <button type="button" class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Foto anterior">&larr;</button>
-    <button type="button" class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Foto siguiente">&rarr;</button>
+    <button type="button" class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Anterior">&larr;</button>
+    <button type="button" class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Siguiente">&rarr;</button>
     <figure class="lightbox-figure">
       <img src="" alt="" id="lightboxImg">
+      <video id="lightboxVideo" autoplay muted loop playsinline hidden></video>
       <figcaption>
         <span class="display" id="lightboxTitle"></span>
         <span class="eyebrow" id="lightboxCat"></span>
@@ -371,14 +426,14 @@
     </figure>
   </div>
 
-  <!-- 09 CONTACTO -->
+  <!-- 07 CONTACTO -->
   <section id="contacto" class="section dark contact">
     <div class="wrap contact-grid">
       <div class="contact-info">
-        <p class="eyebrow contact-eyebrow"><span class="sec-num">09</span> — {% et "contact" "eyebrow" %}Contacto{% endet %}</p>
+        <p class="eyebrow contact-eyebrow"><span class="sec-num">07</span> — {% et "contact" "eyebrow" %}Contacto{% endet %}</p>
         <h2 class="display contact-title" data-lines>{% et "contact" "title" %}Hablemos de<br>tu próximo<br>proyecto.{% endet %}</h2>
         <p class="contact-lead" data-reveal>{% et "contact" "lead" %}Cuéntanos qué necesitas y te responderemos a la brevedad.{% endet %}</p>
-        <ul class="contact-list">
+          <ul class="contact-list">
           <li>
             <strong>Teléfono</strong>
             <a class="phone-link" href="tel:+56930689483">+56 9 3068 9483</a>
@@ -391,6 +446,10 @@
           <li>
             <strong>Instagram</strong>
             <a href="https://instagram.com/fdsconstrucciones" target="_blank" rel="noopener">@fdsconstrucciones</a>
+          </li>
+          <li>
+            <strong>TikTok</strong>
+            <a href="https://www.tiktok.com/@fs.construcciones" target="_blank" rel="noopener">@fs.construcciones</a>
           </li>
         </ul>
         <div class="social-buttons">
@@ -411,7 +470,7 @@
           <button type="button" class="contact-tab is-active" role="tab" aria-selected="true" data-mode="cotizar">Cotizar un proyecto</button>
           <button type="button" class="contact-tab" role="tab" aria-selected="false" data-mode="contacto">Consultas y trabajo</button>
         </div>
-        <form method="post" action="{% url 'home' %}#contacto" novalidate class="contact-form" id="contactForm">
+        <form method="post" action="{% url 'home' %}#contacto" enctype="multipart/form-data" novalidate class="contact-form" id="contactForm">
           {% csrf_token %}
           <div class="form-row">
             <label for="{{ form.name.id_for_label }}">Nombre</label>
@@ -432,6 +491,22 @@
           <div class="form-row">
             <label for="{{ form.service.id_for_label }}" id="serviceLabel">Servicio de interés</label>
             {{ form.service }}
+          </div>
+          <div class="form-row" id="cvRow" hidden>
+            <label for="{% if form.cv %}{{ form.cv.id_for_label }}{% else %}id_cv{% endif %}">Currículum Vitae (Opcional)</label>
+            <div class="file-picker" id="cvPicker">
+              {% if form.cv %}
+                {{ form.cv }}
+              {% else %}
+                <input type="file" name="cv" id="id_cv" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+              {% endif %}
+              <label for="{% if form.cv %}{{ form.cv.id_for_label }}{% else %}id_cv{% endif %}" class="file-picker-label">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                <span class="file-picker-text" id="cvFileName">Adjuntar CV (PDF o Word)</span>
+              </label>
+              <button type="button" class="eyebrow file-picker-clear" id="cvClear" hidden>Quitar</button>
+            </div>
+            {% if form.cv %}{{ form.cv.errors }}{% endif %}
           </div>
           <div class="form-row">
             <label for="{{ form.message.id_for_label }}">Mensaje</label>

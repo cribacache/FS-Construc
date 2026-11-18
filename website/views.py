@@ -254,6 +254,7 @@ def _static_gallery():
             pk="",
             category=category,
             title=label,
+            is_video=False,
             image=SimpleNamespace(url=static(f"img/gallery/{filename}")),
             get_category_display=labels.get(category, label),
         )
@@ -262,8 +263,8 @@ def _static_gallery():
 
 
 def _service_cards(by_category, details_by_slug):
-    """Services with the photo shown next to them in the list: the detail
-    banner for Ley de Ductos / CCDD, otherwise a gallery photo of the matching
+    """Services with the media shown next to them in the list: the detail
+    banner for Ley de Ductos / CCDD, otherwise a gallery item of the matching
     category (a different one each time a category repeats)."""
     used = {}
     cards = []
@@ -272,16 +273,20 @@ def _service_cards(by_category, details_by_slug):
         if slug:
             detail = details_by_slug[slug]
             url = detail["bg_url"] or static(detail["hero_image"])
+            is_video = bool(detail.get("bg_is_video"))
         else:
             category = service["category"]
             index = used.get(category, 0)
             used[category] = index + 1
             photos = by_category.get(category) or []
             if photos:
-                url = photos[index % len(photos)].image.url
+                chosen = photos[index % len(photos)]
+                url = chosen.image.url
+                is_video = bool(getattr(chosen, "is_video", False))
             else:
                 url = static(f"img/gallery/{category}-{min(index + 1, 2)}.jpg")
-        cards.append({**service, "image_url": url})
+                is_video = False
+        cards.append({**service, "image_url": url, "is_video": is_video})
     return cards
 
 
@@ -307,7 +312,7 @@ def home(request):
             )
             return redirect("home")
 
-        form = ContactForm(request.POST)
+        form = ContactForm(request.POST, request.FILES)
         if form.is_valid():
             if not form.is_spam():
                 form.save()
@@ -336,24 +341,20 @@ def _site_context(form, edit_mode=False):
     by_category = {}
     for photo in gallery:
         by_category.setdefault(photo.category, []).append(photo)
-    # Filters go from the category with the fewest photos to the one with the
-    # most, and "Todos" closes the list. The page opens on the shortest one so
-    # it loads compact; the editor opens on "Todos" so every photo is reachable.
+
     counts = {slug: len(photos) for slug, photos in by_category.items() if slug in category_labels}
-    if edit_mode:
-        # The editor lists every category (even empty ones) so a photo can be
-        # added to any of them, including the very first photo of a new category.
-        for slug in category_labels:
-            counts.setdefault(slug, 0)
+    for slug in category_labels:
+        counts.setdefault(slug, 0)
     gallery_categories = sorted(
         (
             {"slug": slug, "label": category_labels[slug], "count": count}
             for slug, count in counts.items()
         ),
-        key=lambda c: (c["count"], c["label"]),
+        key=lambda c: (c["count"] == 0, c["count"], c["label"]),
     )
+    non_empty = [c for c in gallery_categories if c["count"] > 0]
     gallery_start = (
-        "all" if edit_mode or not gallery_categories else gallery_categories[0]["slug"]
+        "all" if edit_mode or not non_empty else non_empty[0]["slug"]
     )
 
     slot_images = {name: _current_slot_image(name) for name in SLOT_NAMES}
@@ -367,6 +368,7 @@ def _site_context(form, edit_mode=False):
                 "slot": DETAIL_SLOTS[slug],
                 "photo_id": image.pk if image else "",
                 "bg_url": image.image.url if image else None,
+                "bg_is_video": bool(image.is_video) if image else False,
             }
         )
     details_by_slug = {detail["slug"]: detail for detail in details}
@@ -382,9 +384,13 @@ def _site_context(form, edit_mode=False):
         "gallery_categories": gallery_categories,
         "gallery_start": gallery_start,
         "hero_bg_url": slot_images["hero_bg"].image.url if slot_images["hero_bg"] else None,
+        "hero_bg_is_video": bool(slot_images["hero_bg"].is_video) if slot_images["hero_bg"] else False,
         "build_project_url": slot_images["build_project"].image.url if slot_images["build_project"] else None,
+        "build_project_is_video": bool(slot_images["build_project"].is_video) if slot_images["build_project"] else False,
         "build_remodel_url": slot_images["build_remodel"].image.url if slot_images["build_remodel"] else None,
+        "build_remodel_is_video": bool(slot_images["build_remodel"].is_video) if slot_images["build_remodel"] else False,
         "build_quote_url": slot_images["build_quote"].image.url if slot_images["build_quote"] else None,
+        "build_quote_is_video": bool(slot_images["build_quote"].is_video) if slot_images["build_quote"] else False,
         "fallback_static": FALLBACK_STATIC,
         "edit_mode": edit_mode,
         "slot_ids": {name: (img.pk if img else "") for name, img in slot_images.items()},
@@ -425,7 +431,7 @@ def dashboard_list(request):
         upload_form = GalleryImageUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
             upload_form.save()
-            messages.success(request, "¡Foto subida con éxito!")
+            messages.success(request, "¡Archivo subido con éxito!")
             return redirect("dashboard_list")
     else:
         upload_form = GalleryImageUploadForm()
@@ -457,9 +463,12 @@ def dashboard_update(request, pk):
 @require_POST
 def dashboard_delete(request, pk):
     photo = get_object_or_404(GalleryImage, pk=pk)
-    photo.image.delete(save=False)
+    try:
+        photo.image.delete(save=False)
+    except OSError:
+        pass
     photo.delete()
-    messages.success(request, "Foto eliminada.")
+    messages.success(request, "Archivo eliminado.")
     return redirect("dashboard_list")
 
 
@@ -480,11 +489,11 @@ def _json_body(request):
 def _form_error_message(form):
     for errors in form.errors.values():
         return errors[0]
-    return "No se pudo guardar la foto."
+    return "No se pudo guardar el archivo."
 
 
 def _make_current(slot, photo):
-    """A singleton slot shows exactly one photo: hide any other active one."""
+    """A singleton slot shows exactly one photo/video: hide any other active one."""
     GalleryImage.objects.filter(placement=slot, is_active=True).exclude(pk=photo.pk).update(
         is_active=False
     )
@@ -538,7 +547,7 @@ def api_move(request):
     data = _json_body(request)
     photo = GalleryImage.objects.filter(pk=data.get("photo"), is_active=True).first()
     if photo is None:
-        return _json_error("No encontré esa foto.", 404)
+        return _json_error("No encontré ese archivo.", 404)
 
     with transaction.atomic():
         if "to_slot" in data:
@@ -557,7 +566,7 @@ def api_move(request):
         elif "with" in data:
             other = GalleryImage.objects.filter(pk=data.get("with"), is_active=True).first()
             if other is None:
-                return _json_error("No encontré esa foto.", 404)
+                return _json_error("No encontré ese archivo.", 404)
             if other.pk != photo.pk:
                 _swap(photo, other)
         else:
@@ -581,7 +590,10 @@ def api_gallery_reorder(request):
 @require_POST
 def api_photo_delete(request, pk):
     photo = get_object_or_404(GalleryImage, pk=pk)
-    photo.image.delete(save=False)
+    try:
+        photo.image.delete(save=False)
+    except OSError:
+        pass
     photo.delete()
     return JsonResponse({"ok": True})
 

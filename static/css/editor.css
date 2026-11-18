@@ -130,7 +130,7 @@ html[data-edit] .svc-desc { grid-template-rows: 1fr; opacity: 1; margin-top: 0.7
 html[data-edit] .svc-bar { width: 100%; }
 html[data-edit] .contact-form-wrap { pointer-events: none; }
 
-/* ---- Photo controls ---- */
+/* ---- Photo & Video controls ---- */
 [data-slot] { position: relative; }
 html:not(.ed-hl-off) [data-slot] { outline: 2px dashed var(--ed); outline-offset: -2px; }
 .ed-ctl {
@@ -146,7 +146,7 @@ html:not(.ed-hl-off) [data-slot] { outline: 2px dashed var(--ed); outline-offset
 .gallery-item:hover > .ed-ctl,
 .gallery-item > .ed-ctl:focus-within { opacity: 1; }
 html:not(.ed-hl-off) .gallery-item { outline: 1.5px solid rgba(37, 99, 235, 0.55); outline-offset: -1.5px; }
-/* The site header covers the top of the hero, so its photo controls sit at the bottom. */
+/* The site header covers the top of the hero, so its media controls sit at the bottom. */
 .hero[data-slot] > .ed-ctl { top: auto; bottom: 24px; right: 24px; z-index: 60; }
 .ed-pill {
   display: inline-block;
@@ -172,7 +172,7 @@ html.ed-dragging .ed-source { opacity: 0.45; }
 html.ed-dragging .ed-over { outline: 5px solid var(--ed); outline-offset: -5px; background-color: var(--ed-soft); }
 html.ed-dragging .ed-ctl { opacity: 0; }
 
-/* "Agregar foto" tile */
+/* "Agregar foto o video" tile */
 .gallery-add {
   min-height: 14rem;
   border: 2px dashed var(--ed);
@@ -191,7 +191,7 @@ html.ed-dragging .ed-ctl { opacity: 0; }
 .gallery-add-icon { font-size: 2rem; line-height: 1; }
 .gallery-add-title { font-size: 1rem; font-weight: 600; }
 
-/* Add-photo dialog */
+/* Add-media dialog */
 .ed-dialog {
   border: none;
   border-radius: 14px;
