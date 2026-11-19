@@ -97,7 +97,7 @@ class EditorApiTests(TestCase):
     def test_editor_renders_home_in_edit_mode(self):
         response = self.client.get("/mis-fotos/")
         self.assertContains(response, 'data-edit="1"')
-        self.assertContains(response, 'data-slot="hero_bg"')
+        self.assertContains(response, 'data-slot="build_project"')
 
     def test_slot_upload_replaces_current_and_hides_old(self):
         old = self.photo("hero_bg")
