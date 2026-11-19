@@ -17,17 +17,20 @@ class SecurityHeadersMiddleware:
         response = self.get_response(request)
 
         gs_bucket = settings.GS_BUCKET_NAME
-        img_sources = "'self' data:"
+        img_sources = "'self' data: blob:"
+        media_sources = "'self' blob:"
         if gs_bucket:
-            img_sources += f" https://storage.googleapis.com"
+            img_sources += " https://storage.googleapis.com"
+            media_sources += " https://storage.googleapis.com"
 
         response["Content-Security-Policy"] = (
             "default-src 'self'; "
             f"img-src {img_sources}; "
+            f"media-src {media_sources}; "
             "style-src 'self' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
             "script-src 'self'; "
-            "frame-ancestors 'none'; "
+            "frame-ancestors 'self'; "
             "base-uri 'self'; "
             "form-action 'self'"
         )

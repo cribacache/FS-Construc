@@ -80,7 +80,7 @@ class ContactForm(forms.ModelForm):
 
 
 MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
-MAX_VIDEO_SIZE = 50 * 1024 * 1024  # 50 MB
+MAX_VIDEO_SIZE = 2 * 1024 * 1024 * 1024  # 2 GB
 ALLOWED_IMAGE_EXTENSIONS = ("jpg", "jpeg", "png", "webp", "avif", "gif")
 ALLOWED_VIDEO_EXTENSIONS = ("mp4", "webm", "mov", "m4v", "ogg")
 
@@ -103,7 +103,7 @@ class GalleryImageUploadForm(forms.ModelForm):
         ext = media.name.rsplit(".", 1)[-1].lower() if "." in media.name else ""
         if ext in ALLOWED_VIDEO_EXTENSIONS:
             if media.size > MAX_VIDEO_SIZE:
-                raise forms.ValidationError("El video no puede pesar más de 50 MB.")
+                raise forms.ValidationError("El video no puede pesar más de 2 GB.")
             return media
         if ext in ALLOWED_IMAGE_EXTENSIONS:
             if media.size > MAX_IMAGE_SIZE:
