@@ -17,8 +17,19 @@ from django.views.decorators.http import require_POST
 
 from .forms import ContactForm, GalleryImageEditForm, GalleryImageUploadForm
 from .management.commands.import_gallery import GALLERY_FILES
-from .models import GalleryImage, SiteText
+from .models import (
+    DEFAULT_SECTION_ORDER,
+    GalleryImage,
+    HeroSlide,
+    SECTION_META,
+    SiteSettings,
+    SiteText,
+    VIDEO_EXTENSIONS,
+)
 from .ratelimit import get_client_ip, is_rate_limited
+
+IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif")
+ALLOWED_CAROUSEL_EXTENSIONS = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
 
 SERVICES = [
     {
@@ -216,14 +227,12 @@ PROCESS_STEPS = [
     },
 ]
 
-# Fallback static images, used only if nothing has been uploaded yet for that slot.
 FALLBACK_STATIC = {
     "hero_bg": "img/gallery/hero.jpg",
     "build_project": "img/gallery/fachadas-2.jpg",
     "build_remodel": "img/gallery/remodelaciones-1.jpg",
     "build_quote": "img/gallery/pavimentos-1.jpg",
 }
-
 
 SLOT_NAMES = (
     "hero_bg",
@@ -245,9 +254,6 @@ def _current_slot_image(placement):
 
 
 def _static_gallery():
-    """Photos shipped with the site (the same curated set `import_gallery`
-    loads). Used only while the database has no gallery photos at all, e.g. a
-    fresh install or local development, so the portfolio is never empty."""
     labels = dict(GalleryImage.CATEGORY_CHOICES)
     return [
         SimpleNamespace(
@@ -263,9 +269,6 @@ def _static_gallery():
 
 
 def _service_cards(by_category, details_by_slug):
-    """Services with the media shown next to them in the list: the detail
-    banner for Ley de Ductos / CCDD, otherwise a gallery item of the matching
-    category (a different one each time a category repeats)."""
     used = {}
     cards = []
     for service in SERVICES:
@@ -316,8 +319,6 @@ def home(request):
         if form.is_valid():
             if not form.is_spam():
                 form.save()
-            # Same confirmation either way, so a bot can't tell its
-            # submission was silently dropped.
             messages.success(
                 request,
                 "¡Gracias por tu mensaje! Te contactaremos a la brevedad.",
@@ -372,8 +373,20 @@ def _site_context(form, edit_mode=False):
             }
         )
     details_by_slug = {detail["slug"]: detail for detail in details}
+
+    site_cfg = SiteSettings.get_solo()
+    sections_layout, contact_num = site_cfg.get_sections_layout()
+    hero_slides_qs = (
+        HeroSlide.objects.all() if edit_mode else HeroSlide.objects.filter(is_active=True)
+    )
+
     return {
         "form": form,
+        "site_cfg": site_cfg,
+        "site_extra": site_cfg.get_extra(),
+        "sections_layout": sections_layout,
+        "contact_num": contact_num,
+        "hero_slides": list(hero_slides_qs),
         "services": _service_cards(by_category, details_by_slug),
         "details": details,
         "values": VALUES,
@@ -399,9 +412,6 @@ def _site_context(form, edit_mode=False):
 
 
 class RateLimitedLoginView(auth_views.LoginView):
-    """Same login view, but blocks an IP that's hammering the form before
-    Django even validates the credentials."""
-
     def post(self, request, *args, **kwargs):
         ip = get_client_ip(request)
         if settings.RATE_LIMIT_ACTIVE and is_rate_limited(
@@ -419,14 +429,12 @@ class RateLimitedLoginView(auth_views.LoginView):
 @never_cache
 @login_required(login_url="dashboard_login")
 def dashboard(request):
-    """Visual editor: the real home page rendered in edit mode."""
     return render(request, "website/home.html", _site_context(ContactForm(), edit_mode=True))
 
 
 @never_cache
 @login_required(login_url="dashboard_login")
 def dashboard_list(request):
-    """Original list-style photo manager (title, category, hide, order)."""
     if request.method == "POST":
         upload_form = GalleryImageUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
@@ -493,7 +501,6 @@ def _form_error_message(form):
 
 
 def _make_current(slot, photo):
-    """A singleton slot shows exactly one photo/video: hide any other active one."""
     GalleryImage.objects.filter(placement=slot, is_active=True).exclude(pk=photo.pk).update(
         is_active=False
     )
@@ -529,16 +536,30 @@ def api_slot_upload(request, slot):
 @login_required(login_url="dashboard_login")
 @require_POST
 def api_gallery_upload(request):
-    data = request.POST.copy()
-    data["placement"] = "gallery"
-    form = GalleryImageUploadForm(data, request.FILES)
-    if not form.is_valid():
-        return _json_error(_form_error_message(form))
+    files = request.FILES.getlist("images") or request.FILES.getlist("image")
+    if not files:
+        return _json_error("Selecciona al menos una foto o video.")
+
+    category = request.POST.get("category", "fachadas")
+    title = request.POST.get("title", "").strip()[:120]
     last = GalleryImage.objects.filter(placement="gallery").aggregate(Max("order"))["order__max"]
-    photo = form.save(commit=False)
-    photo.order = 0 if last is None else last + 1
-    photo.save()
-    return JsonResponse({"ok": True, "id": photo.pk})
+    next_order = 0 if last is None else last + 1
+    created_ids = []
+
+    with transaction.atomic():
+        for idx, uploaded in enumerate(files):
+            form = GalleryImageUploadForm(
+                {"placement": "gallery", "category": category, "title": title},
+                {"image": uploaded},
+            )
+            if not form.is_valid():
+                return _json_error(_form_error_message(form))
+            photo = form.save(commit=False)
+            photo.order = next_order + idx
+            photo.save()
+            created_ids.append(photo.pk)
+
+    return JsonResponse({"ok": True, "ids": created_ids, "id": created_ids[0]})
 
 
 @login_required(login_url="dashboard_login")
@@ -598,6 +619,24 @@ def api_photo_delete(request, pk):
     return JsonResponse({"ok": True})
 
 
+@login_required(login_url="dashboard_login")
+@require_POST
+def api_photo_update(request, pk):
+    photo = get_object_or_404(GalleryImage, pk=pk)
+    data = _json_body(request)
+    fields = []
+    if isinstance(data.get("title"), str):
+        photo.title = data["title"].strip()[:120]
+        fields.append("title")
+    valid_categories = {choice[0] for choice in GalleryImage.CATEGORY_CHOICES}
+    if data.get("category") in valid_categories:
+        photo.category = data["category"]
+        fields.append("category")
+    if fields:
+        photo.save(update_fields=fields)
+    return JsonResponse({"ok": True})
+
+
 TEXT_KEY_RE = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
 MAX_TEXT_LENGTH = 3000
 
@@ -605,7 +644,6 @@ MAX_TEXT_LENGTH = 3000
 @login_required(login_url="dashboard_login")
 @require_POST
 def api_texts_save(request):
-    """Save edited texts. An empty value restores the original text."""
     changes = _json_body(request).get("changes")
     if not isinstance(changes, dict) or len(changes) > 300:
         return _json_error("Cambios inválidos.")
@@ -623,4 +661,211 @@ def api_texts_save(request):
                 SiteText.objects.update_or_create(key=key, defaults={"value": value})
             else:
                 SiteText.objects.filter(key=key).delete()
+    return JsonResponse({"ok": True})
+
+
+# ---------- Carousel & SiteSettings API ----------
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def editor_carousel_add(request):
+    files = request.FILES.getlist("media")
+    title = request.POST.get("title", "").strip()[:140]
+    if not files:
+        return _json_error("Selecciona al menos una imagen o video.")
+
+    for uploaded in files:
+        filename = (uploaded.name or "").lower()
+        if not filename.endswith(ALLOWED_CAROUSEL_EXTENSIONS):
+            return _json_error(
+                "Formato no compatible. Usa JPG, PNG, WEBP, MP4, WEBM o MOV."
+            )
+
+    last = HeroSlide.objects.aggregate(Max("order"))["order__max"]
+    next_order = 0 if last is None else last + 1
+    created = []
+    with transaction.atomic():
+        for idx, uploaded in enumerate(files):
+            slide = HeroSlide.objects.create(
+                title=title,
+                media=uploaded,
+                order=next_order + idx,
+                is_active=True,
+            )
+            created.append(
+                {
+                    "id": slide.pk,
+                    "title": slide.title,
+                    "url": slide.media.url,
+                    "is_video": slide.is_video,
+                    "is_active": slide.is_active,
+                }
+            )
+    return JsonResponse({"ok": True, "slides": created})
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def editor_carousel_reorder(request):
+    ids = _json_body(request).get("ids")
+    if not isinstance(ids, list) or not all(isinstance(i, int) for i in ids):
+        return _json_error("Orden inválido.")
+    with transaction.atomic():
+        for idx, slide_id in enumerate(ids):
+            HeroSlide.objects.filter(pk=slide_id).update(order=idx)
+    return JsonResponse({"ok": True})
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def editor_carousel_toggle(request, pk):
+    slide = get_object_or_404(HeroSlide, pk=pk)
+    slide.is_active = not slide.is_active
+    slide.save(update_fields=["is_active"])
+    return JsonResponse({"ok": True, "is_active": slide.is_active})
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def editor_carousel_update(request, pk):
+    slide = get_object_or_404(HeroSlide, pk=pk)
+    data = _json_body(request)
+    if isinstance(data.get("title"), str):
+        slide.title = data["title"].strip()[:140]
+        slide.save(update_fields=["title"])
+    return JsonResponse({"ok": True})
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def editor_carousel_delete(request, pk):
+    slide = get_object_or_404(HeroSlide, pk=pk)
+    try:
+        if slide.media:
+            slide.media.delete(save=False)
+    except OSError:
+        pass
+    slide.delete()
+    return JsonResponse({"ok": True})
+
+
+VALID_TRANSITIONS = {choice[0] for choice in SiteSettings.TRANSITION_CHOICES}
+VALID_THEMES = {choice[0] for choice in SiteSettings.THEME_CHOICES}
+VALID_FONTS = {choice[0] for choice in SiteSettings.FONT_CHOICES}
+VALID_RADII = {choice[0] for choice in SiteSettings.RADIUS_CHOICES}
+VALID_HERO_HEIGHTS = {choice[0] for choice in SiteSettings.HERO_HEIGHT_CHOICES}
+VALID_SPACINGS = {choice[0] for choice in SiteSettings.SPACING_CHOICES}
+HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+
+@login_required(login_url="dashboard_login")
+@require_POST
+def editor_settings_save(request):
+    payload = _json_body(request)
+    if not payload:
+        return _json_error("Datos inválidos.")
+
+    cfg = SiteSettings.get_solo()
+
+    if payload.get("carousel_transition") in VALID_TRANSITIONS:
+        cfg.carousel_transition = payload["carousel_transition"]
+
+    if "carousel_interval" in payload:
+        try:
+            cfg.carousel_interval = max(3, min(20, int(payload["carousel_interval"])))
+        except (TypeError, ValueError):
+            pass
+
+    if payload.get("theme_preset") in VALID_THEMES:
+        cfg.theme_preset = payload["theme_preset"]
+
+    if payload.get("font_preset") in VALID_FONTS:
+        cfg.font_preset = payload["font_preset"]
+
+    if payload.get("radius_preset") in VALID_RADII:
+        cfg.radius_preset = payload["radius_preset"]
+
+    if payload.get("hero_height") in VALID_HERO_HEIGHTS:
+        cfg.hero_height = payload["hero_height"]
+
+    if payload.get("section_spacing") in VALID_SPACINGS:
+        cfg.section_spacing = payload["section_spacing"]
+
+    if "hero_overlay" in payload:
+        try:
+            cfg.hero_overlay = max(15, min(85, int(payload["hero_overlay"])))
+        except (TypeError, ValueError):
+            pass
+
+    if "accent_color" in payload and isinstance(payload["accent_color"], str):
+        raw_color = payload["accent_color"].strip()
+        if raw_color == "":
+            cfg.accent_color = ""
+        elif HEX_COLOR_RE.match(raw_color):
+            cfg.accent_color = raw_color.lower()
+
+    str_limits = {
+        "phone_display": 40,
+        "phone_raw": 30,
+        "whatsapp_number": 30,
+        "whatsapp_prefill": 200,
+        "email_primary": 254,
+        "email_sales": 254,
+        "instagram_handle": 60,
+        "instagram_url": 200,
+        "tiktok_handle": 60,
+        "tiktok_url": 200,
+        "office_location": 140,
+        "cta_label": 40,
+    }
+    for field, max_len in str_limits.items():
+        if field in payload and isinstance(payload[field], str):
+            val = payload[field].strip()[:max_len]
+            if field == "whatsapp_number":
+                val = re.sub(r"\D+", "", val)
+            if field in ("email_primary", "cta_label") and not val:
+                continue
+            setattr(cfg, field, val)
+
+    bool_fields = (
+        "carousel_kenburns",
+        "carousel_pause_hover",
+        "show_marquee",
+        "show_floating_wa",
+        "show_choose",
+        "show_portfolio",
+        "show_tech",
+        "show_why",
+        "show_services",
+    )
+    for bool_field in bool_fields:
+        if bool_field in payload:
+            setattr(cfg, bool_field, bool(payload[bool_field]))
+
+    if isinstance(payload.get("section_order"), list):
+        valid_order = [k for k in payload["section_order"] if k in SECTION_META]
+        seen = set()
+        deduped = []
+        for k in valid_order:
+            if k not in seen:
+                seen.add(k)
+                deduped.append(k)
+        for k in DEFAULT_SECTION_ORDER:
+            if k not in seen:
+                deduped.append(k)
+        cfg.section_order = deduped
+
+    extra_payload = payload.get("extra")
+    if isinstance(extra_payload, dict):
+        current_extra = dict(cfg.extra or {})
+        for key, allowed in SiteSettings.EXTRA_OPTIONS.items():
+            if extra_payload.get(key) in allowed:
+                current_extra[key] = extra_payload[key]
+        for key, max_len in SiteSettings.EXTRA_TEXT_LIMITS.items():
+            if isinstance(extra_payload.get(key), str):
+                current_extra[key] = extra_payload[key].strip()[:max_len]
+        cfg.extra = current_extra
+
+    cfg.save()
     return JsonResponse({"ok": True})

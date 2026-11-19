@@ -75,7 +75,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 # HTTPS / cookie hardening. Gated on DEBUG so local `runserver` (plain HTTP)
 # still works without extra setup.
-X_FRAME_OPTIONS = 'DENY'
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 SECURE_SSL_REDIRECT = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG

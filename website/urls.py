@@ -31,4 +31,10 @@ urlpatterns = [
     path("mis-fotos/api/photo/<int:pk>/delete/", views.api_photo_delete, name="api_photo_delete"),
     path("mis-fotos/<int:pk>/actualizar/", views.dashboard_update, name="dashboard_update"),
     path("mis-fotos/<int:pk>/eliminar/", views.dashboard_delete, name="dashboard_delete"),
+    # Nuevas rutas integradas para el carrusel multimedia y panel de personalización
+    path("mis-fotos/api/carousel/add/", views.editor_carousel_add, name="editor_carousel_add"),
+    path("mis-fotos/api/carousel/reorder/", views.editor_carousel_reorder, name="editor_carousel_reorder"),
+    path("mis-fotos/api/carousel/<int:pk>/toggle/", views.editor_carousel_toggle, name="editor_carousel_toggle"),
+    path("mis-fotos/api/carousel/<int:pk>/delete/", views.editor_carousel_delete, name="editor_carousel_delete"),
+    path("mis-fotos/api/settings/save/", views.editor_settings_save, name="editor_settings_save"),
 ]

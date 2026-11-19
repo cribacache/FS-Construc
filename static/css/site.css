@@ -1396,44 +1396,9 @@ html.anim .studio-title .w.is-in { opacity: 1; }
   .marquee-track span { gap: 2rem; padding-right: 2rem; }
   .marquee-track i { font-size: 1rem; }
 
-  /* Intercambia Proyectos ejecutados (#portafolio) y Nuestros servicios (#servicios) solo en móvil */
-  main.grain {
-    display: flex;
-    flex-direction: column;
-  }
-  main.grain > * { width: 100%; }
-  #inicio { order: 1; }
-  .marquee { order: 2; }
-  #comenzar { order: 3; }
-  #portafolio {
-    order: 4;
-    border-top: 1px solid var(--border);
-  }
-  #ley-ductos { order: 5; }
-  #ccdd { order: 6; }
-  #nosotros { order: 7; }
-  #servicios { order: 8; }
-  #lightbox { order: 9; }
-  #contacto {
-    order: 10;
-    border-top: 1px solid var(--ink-border);
-  }
-
-  /* Mantiene numeración correlativa 01 → 02 → 03 → 04 → 05 → 06 → 07 en móvil */
-  #portafolio .sec-num,
-  #servicios .sec-num {
-    display: inline-block;
-    font-size: 0;
-    vertical-align: baseline;
-  }
-  #portafolio .sec-num::before {
-    content: "02";
-    font-size: 0.68rem;
-  }
-  #servicios .sec-num::before {
-    content: "06";
-    font-size: 0.68rem;
-  }
+  /* NOTA: el orden de las secciones y su numeración ya NO se definen aquí.
+     Los controla el panel "Orden y visibilidad de secciones" (orden del DOM
+     dentro de #dynamicSectionsHost) y la numeración automática del servidor. */
 
   /* 01 ¿Qué quieres construir? — tarjetas compactas en móvil */
   .choose-grid { gap: 2.25rem; }
@@ -1452,7 +1417,7 @@ html.anim .studio-title .w.is-in { opacity: 1; }
     line-height: 1.6;
   }
 
-  /* 02 (móvil) Proyectos ejecutados */
+  /* Proyectos ejecutados */
   .gallery-filters {
     flex-wrap: nowrap;
     gap: 0.45rem;
@@ -1541,7 +1506,7 @@ html.anim .studio-title .w.is-in { opacity: 1; }
     font-size: 0.8rem;
   }
 
-  /* 03 / 04 Bloques técnicos compactos en móvil */
+  /* Bloques técnicos compactos en móvil */
   .tech-grid { gap: 2rem; }
   .tech-media { aspect-ratio: 16 / 10; }
   .tech-intro {
@@ -1571,7 +1536,7 @@ html.anim .studio-title .w.is-in { opacity: 1; }
     line-height: 1.65;
   }
 
-  /* 05 Por qué elegirnos — grilla 2x2 limpia en móvil */
+  /* Por qué elegirnos — grilla 2x2 limpia en móvil */
   .why-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .why-card { padding: 1.25rem 1rem; }
   .why-card-in { gap: 1.75rem; }
@@ -1583,7 +1548,7 @@ html.anim .studio-title .w.is-in { opacity: 1; }
     line-height: 1.55;
   }
 
-  /* 06 (móvil) Nuestros servicios — acordeón con vista previa visual */
+  /* Nuestros servicios — acordeón con vista previa visual */
   .svc-item {
     grid-template-columns: 2.25rem 1fr;
     gap: 0.65rem;
@@ -1609,7 +1574,7 @@ html.anim .studio-title .w.is-in { opacity: 1; }
     object-fit: cover;
   }
 
-  /* 07 Contacto más compacto y estructurado en móvil */
+  /* Contacto más compacto y estructurado en móvil */
   .contact-grid { gap: 2.75rem; }
   .contact-eyebrow { margin-bottom: 1.15rem; }
   .contact-title { font-size: clamp(2.15rem, 9vw, 2.85rem); }
@@ -1636,8 +1601,171 @@ html.anim .studio-title .w.is-in { opacity: 1; }
   .footer-bottom { margin-top: 1.75rem; gap: 0.5rem; font-size: 0.6rem; }
 }
 
+/* ---------- Paletas configurables por el cliente ---------- */
+main[data-theme="slate"] { --navy: #272b33; --sky: #a5b0c2; --cursor: #8e9bb0; }
+main[data-theme="sand"] { --navy: #5c4631; --sky: #d6b995; --cursor: #c29e74; }
+main[data-theme="emerald"] { --navy: #1b3d33; --sky: #88bfa8; --cursor: #66a38a; }
+
+/* ---------- Carrusel de Portada (4 modos de transición) ---------- */
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.hero-slide.is-active {
+  opacity: 1;
+  z-index: 2;
+}
+.hero-slide.is-leaving {
+  opacity: 1;
+  z-index: 1;
+}
+
+/* Transición 1: Disolvencia cinematográfica + Ken Burns */
+.hero[data-transition="fade"] .hero-slide {
+  transition: opacity 1.3s var(--ease-io);
+}
+.hero[data-transition="fade"] .hero-slide img,
+.hero[data-transition="fade"] .hero-slide video {
+  transform: scale(1.1);
+  transition: transform 6.5s ease-out;
+}
+.hero[data-transition="fade"] .hero-slide.is-active img,
+.hero[data-transition="fade"] .hero-slide.is-active video {
+  transform: scale(1);
+}
+
+/* Transición 2: Deslizamiento lateral */
+.hero[data-transition="slide"] .hero-slide {
+  opacity: 1;
+  transform: translate3d(100%, 0, 0);
+  transition: transform 1.05s var(--ease-io);
+}
+.hero[data-transition="slide"] .hero-slide.is-active {
+  transform: translate3d(0, 0, 0);
+}
+.hero[data-transition="slide"] .hero-slide.is-leaving {
+  transform: translate3d(-28%, 0, 0);
+}
+
+/* Transición 3: Cortina arquitectónica */
+.hero[data-transition="curtain"] .hero-slide {
+  opacity: 1;
+  clip-path: inset(0 0 0 100%);
+  transition: clip-path 1.15s var(--ease-io);
+}
+.hero[data-transition="curtain"] .hero-slide.is-active {
+  clip-path: inset(0 0 0 0);
+}
+.hero[data-transition="curtain"] .hero-slide.is-leaving {
+  clip-path: inset(0 0 0 0);
+}
+
+/* Transición 4: Zoom profundo */
+.hero[data-transition="zoom"] .hero-slide {
+  transform: scale(1.18);
+  transition: opacity 1.2s var(--ease-out), transform 1.5s var(--ease-out);
+}
+.hero[data-transition="zoom"] .hero-slide.is-active {
+  transform: scale(1);
+}
+
+/* Controles discretos del carrusel */
+.hero-carousel-ui {
+  position: absolute;
+  top: 6.25rem;
+  right: var(--gutter);
+  left: var(--gutter);
+  max-width: var(--wrap);
+  margin: 0 auto;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  pointer-events: none;
+}
+.hero-carousel-meta,
+.hero-carousel-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  pointer-events: auto;
+}
+.hero-slide-count { color: var(--accent); }
+.hero-slide-caption {
+  color: var(--ink-muted);
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hero-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.hero-dot {
+  position: relative;
+  width: 2.25rem;
+  height: 2px;
+  background: rgba(241, 238, 233, 0.25);
+  overflow: hidden;
+}
+.hero-dot-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.hero-dot.is-active .hero-dot-fill {
+  animation: heroProgress var(--slide-duration, 6s) linear forwards;
+}
+@keyframes heroProgress { to { transform: scaleX(1); } }
+.hero-arrows { display: flex; gap: 0.4rem; }
+.hero-arrow {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--ink-border);
+  border-radius: 9999px;
+  background: rgba(6, 6, 5, 0.45);
+  color: var(--ink-fg);
+  font-size: 0.95rem;
+  transition: background-color 0.3s, color 0.3s;
+}
+.hero-arrow:hover { background: var(--ink-fg); color: var(--ink); }
+
+@media (max-width: 767px) {
+  .hero-carousel-ui { top: 5.25rem; }
+  .hero-slide-caption { display: none; }
+  .hero-dot { width: 1.4rem; }
+  .hero-arrow { width: 2rem; height: 2rem; font-size: 0.85rem; }
+}
+
 /* ---------- Movimiento reducido ---------- */
 @media (prefers-reduced-motion: reduce) {
   .marquee-track, .grain::after { animation: none; }
   *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* ==========================================================================
+   Orden de secciones: lo controla el panel del editor, NO el CSS.
+   Seguro anti-regresión: aunque otra hoja (studio-overrides.css) intente
+   reordenar con flex/order, el flujo vuelve a ser el del HTML.
+   ========================================================================== */
+main.grain,
+#dynamicSectionsHost {
+  display: block !important;
+}
+main.grain > *,
+#dynamicSectionsHost > *,
+#dynamicSectionsHost > * > * {
+  order: 0 !important;
+}
+@media (max-width: 767px) {
+  #portafolio { border-top: 1px solid var(--border); }
+  #contacto { border-top: 1px solid var(--ink-border); }
 }
