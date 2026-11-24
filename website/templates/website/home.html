@@ -8,6 +8,7 @@
 {% block styles %}
 <link rel="stylesheet" href="{% static 'css/site.css' %}">
 <link rel="stylesheet" href="{% static 'css/studio-overrides.css' %}">
+<link rel="stylesheet" href="{% static 'css/videos.css' %}">
 {% endblock %}
 
 {% block extra_head %}
@@ -794,6 +795,24 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
 
     {% endfor %}
   </div>
+
+  <!-- VIDEOS -->
+  <section id="videos" class="section videos">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow sec-eyebrow" data-reveal>{% et "videos" "eyebrow" %}En terreno{% endet %}</p>
+        <h2 class="display sec-title" data-lines>{% et "videos" "title" %}Así trabajamos{% endet %}</h2>
+        <p class="sec-lead" data-reveal>{% et "videos" "lead" %}Mira nuestras obras en movimiento.{% endet %}</p>
+      </div>
+      <div class="videos-grid">
+        {% for v in site_videos %}
+        <div class="video-card">
+          <video src="{{ v.src }}" poster="{{ v.poster }}" controls playsinline preload="none"></video>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
 
   <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Visor de proyectos">
     <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Cerrar">

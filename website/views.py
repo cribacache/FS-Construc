@@ -393,6 +393,13 @@ def _site_context(form, edit_mode=False):
         "process_steps": PROCESS_STEPS,
         "studio_image_url": _studio_image_url(by_category),
         "site_texts": dict(SiteText.objects.values_list("key", "value")),
+        "site_videos": [
+            {
+                "src": f"{settings.MEDIA_URL}site_videos/video-{n}.mp4",
+                "poster": f"{settings.MEDIA_URL}site_videos/poster-{n}.jpg",
+            }
+            for n in (1, 2, 3)
+        ],
         "gallery": gallery,
         "gallery_categories": gallery_categories,
         "gallery_start": gallery_start,
