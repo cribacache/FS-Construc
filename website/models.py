@@ -9,7 +9,7 @@ SECTION_META = {
     "tech": {"label": "Bloques técnicos (Ley de Ductos / CCDD)", "span": 2},
     "services": {"label": "Nuestros servicios", "span": 1},
     "why": {"label": "Por qué elegirnos", "span": 1},
-    }
+}
 
 
 def default_section_order():
@@ -107,8 +107,16 @@ class HeroSlide(models.Model):
     TRANSITION_CHOICES = [
         ("fade", "Disolvencia cinematográfica"),
         ("slide", "Deslizamiento lateral"),
+        ("push", "Empuje panorámico"),
         ("curtain", "Cortina arquitectónica"),
+        ("vertical-curtain", "Telón vertical"),
+        ("split", "Apertura central"),
+        ("diagonal", "Corte diagonal"),
         ("zoom", "Zoom profundo"),
+        ("zoom-out", "Alejamiento aéreo"),
+        ("iris", "Apertura circular (Iris)"),
+        ("blinds", "Persiana arquitectónica"),
+        ("blur-fade", "Enfoque de lente"),
     ]
 
     title = models.CharField("Etiqueta / Ubicación opcional", max_length=140, blank=True)

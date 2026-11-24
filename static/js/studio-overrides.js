@@ -3,7 +3,11 @@
 
   function csrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]');
-    return meta ? meta.content : "";
+    if (meta && meta.content) return meta.content;
+    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (input && input.value) return input.value;
+    const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
   }
 
   function showToast(msg) {
@@ -74,7 +78,7 @@
     function finishTransition(outgoing, incoming) {
       clearTimeout(carouselCleanupTimer);
       if (outgoing) {
-        outgoing.classList.remove("is-prev");
+        outgoing.classList.remove("is-prev", "is-dir-next", "is-dir-prev");
         const outVid = outgoing.querySelector("video");
         if (outVid) outVid.pause();
       }
@@ -92,6 +96,7 @@
       const outgoing = slides[current];
       const incoming = slides[next];
       const direction = dirHint || (next > current ? "next" : "prev");
+      const dirClass = direction === "prev" ? "is-dir-prev" : "is-dir-next";
 
       slides.forEach((s, idx) => {
         if (idx !== current && idx !== next) {
@@ -102,15 +107,11 @@
       });
 
       outgoing.classList.remove("is-active", "is-entering", "is-dir-next", "is-dir-prev");
-      outgoing.classList.add("is-prev");
+      outgoing.classList.add("is-prev", dirClass);
 
       incoming.classList.remove("is-prev", "is-entering", "is-dir-next", "is-dir-prev");
       void incoming.offsetWidth;
-      incoming.classList.add(
-        "is-active",
-        "is-entering",
-        direction === "prev" ? "is-dir-prev" : "is-dir-next"
-      );
+      incoming.classList.add("is-active", "is-entering", dirClass);
 
       const inVid = incoming.querySelector("video");
       if (inVid) {
@@ -136,7 +137,7 @@
       carouselCleanupTimer = setTimeout(() => {
         incoming.removeEventListener("animationend", onAnimDone);
         finishTransition(outgoing, incoming);
-      }, 680);
+      }, 920);
     }
 
     function getIntervalMs() {
@@ -150,6 +151,11 @@
         goTo(current + 1, "next");
       }, getIntervalMs());
     }
+
+    track._previewNext = () => {
+      goTo(current + 1, "next");
+      startAutoplay();
+    };
 
     if (!track.dataset.bound) {
       track.dataset.bound = "1";
@@ -196,7 +202,7 @@
   }
 
   /* =========================================================
-     2. COLA DE ARCHIVOS CON VISTA PREVIA INSTANTÁNEA
+     2. COLA DE ARCHIVOS CON COMPRESIÓN Y VISTA PREVIA INSTANTÁNEA
      ========================================================= */
   function formatBytes(bytes) {
     if (!bytes) return "0 B";
@@ -205,13 +211,79 @@
     return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
   }
 
-  function createFileQueueManager({ inputId, dropzoneId, queueId, submitBtnId }) {
+  function optimizeImageClientSide(file) {
+    if (
+      !file ||
+      !file.type.startsWith("image/") ||
+      file.type === "image/svg+xml" ||
+      file.type === "image/gif"
+    ) {
+      return Promise.resolve(file);
+    }
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const maxSide = 1920;
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        if (w <= maxSide && h <= maxSide && file.size <= 700 * 1024) {
+          resolve(file);
+          return;
+        }
+        if (w > maxSide || h > maxSide) {
+          if (w >= h) {
+            h = Math.round((h * maxSide) / w);
+            w = maxSide;
+          } else {
+            w = Math.round((w * maxSide) / h);
+            h = maxSide;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob || blob.size >= file.size) {
+              resolve(file);
+              return;
+            }
+            const cleanName = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+            resolve(
+              new File([blob], cleanName, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              })
+            );
+          },
+          "image/jpeg",
+          0.84
+        );
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      };
+      img.src = url;
+    });
+  }
+
+  function createFileQueueManager({ inputId, dropzoneId, queueId, submitBtnId, defaultBtnText }) {
     const input = document.getElementById(inputId);
     const dropzone = document.getElementById(dropzoneId);
     const queueEl = document.getElementById(queueId);
     const submitBtn = document.getElementById(submitBtnId);
     if (!input || !dropzone || !queueEl || !submitBtn) return null;
 
+    const baseBtnLabel = defaultBtnText || submitBtn.textContent.trim() || "Subir";
     let filesList = [];
     let objectUrls = [];
 
@@ -222,6 +294,7 @@
 
     function render() {
       revokeAll();
+      submitBtn.textContent = baseBtnLabel;
       if (!filesList.length) {
         queueEl.hidden = true;
         queueEl.innerHTML = "";
@@ -263,10 +336,13 @@
       `;
     }
 
-    function addFiles(newFiles) {
+    async function addFiles(newFiles) {
       const incoming = Array.from(newFiles || []);
       if (!incoming.length) return;
-      filesList = filesList.concat(incoming);
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Optimizando imagen...";
+      const optimized = await Promise.all(incoming.map(optimizeImageClientSide));
+      filesList = filesList.concat(optimized);
       input.value = "";
       render();
     }
@@ -323,7 +399,7 @@
     const drawer = document.getElementById("customizerDrawer");
     const main = document.getElementById("siteMain");
     if (!drawer || !main) return;
-    
+
     function syncDrawerLayout() {
       const isOpen = drawer.classList.contains("is-open");
       document.body.classList.toggle("is-drawer-open", isOpen);
@@ -481,81 +557,121 @@
       dropzoneId: "czSlideDropzone",
       queueId: "czSlideQueue",
       submitBtnId: "uploadSlidesBtn",
+      defaultBtnText: "Subir al carrusel",
     });
+    const slideInputEl = document.getElementById("czSlideFiles");
+    if (slideInputEl && slideQueue) slideInputEl._fsQueue = slideQueue;
 
     const galleryQueue = createFileQueueManager({
       inputId: "czGalleryFiles",
       dropzoneId: "czGalleryDropzone",
       queueId: "czGalleryQueue",
       submitBtnId: "uploadGalleryBtn",
+      defaultBtnText: "Publicar en portafolio",
     });
+    const galleryInputEl = document.getElementById("czGalleryFiles");
+    if (galleryInputEl && galleryQueue) galleryInputEl._fsQueue = galleryQueue;
 
-    const uploadSlidesBtn = document.getElementById("uploadSlidesBtn");
-    if (uploadSlidesBtn && slideQueue) {
-      const freshBtn = uploadSlidesBtn.cloneNode(true);
-      uploadSlidesBtn.parentNode.replaceChild(freshBtn, uploadSlidesBtn);
+    if (!drawer.dataset.uploadDelegated) {
+      drawer.dataset.uploadDelegated = "1";
+      drawer.addEventListener(
+        "click",
+        async (e) => {
+          const slideBtn = e.target.closest("#uploadSlidesBtn");
+          if (slideBtn) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const inp = document.getElementById("czSlideFiles");
+            const files = inp && inp._fsQueue ? inp._fsQueue.getFiles() : [];
+            if (!files.length) {
+              showToast("Selecciona una imagen o video antes de subir.");
+              return;
+            }
 
-      freshBtn.addEventListener("click", async () => {
-        const files = slideQueue.getFiles();
-        if (!files.length) return;
-        const fd = new FormData();
-        const titleInput = document.getElementById("czSlideTitle");
-        fd.append("title", titleInput ? titleInput.value.trim() : "");
-        files.forEach((f) => fd.append("media", f));
+            const fd = new FormData();
+            const titleInput = document.getElementById("czSlideTitle");
+            fd.append("title", titleInput ? titleInput.value.trim() : "");
+            files.forEach((f) => fd.append("media", f));
 
-        freshBtn.disabled = true;
-        freshBtn.textContent = `Subiendo ${files.length} archivo(s)...`;
+            slideBtn.disabled = true;
+            slideBtn.textContent = `Subiendo ${files.length} archivo(s)...`;
 
-        try {
-          const res = await fetch(drawer.dataset.urlCarouselAdd, {
-            method: "POST",
-            headers: { "X-CSRFToken": csrfToken() },
-            body: fd,
-          });
-          const data = await res.json();
-          if (!data.ok) throw new Error(data.error || "Error al subir");
-          window.location.href = `${window.location.pathname}?cz_tab=carousel`;
-        } catch (err) {
-          showToast(err.message);
-          freshBtn.disabled = false;
-          freshBtn.textContent = "Subir al carrusel";
-        }
-      });
-    }
+            try {
+              const res = await fetch(drawer.dataset.urlCarouselAdd, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "X-CSRFToken": csrfToken() },
+                body: fd,
+              });
+              const raw = await res.text();
+              let data;
+              try {
+                data = JSON.parse(raw);
+              } catch (_) {
+                throw new Error(`Error HTTP ${res.status} al subir al carrusel.`);
+              }
+              if (!res.ok || !data.ok) {
+                throw new Error(data.error || `Error HTTP ${res.status}`);
+              }
+              window.location.href = `${window.location.pathname}?cz_tab=carousel`;
+            } catch (err) {
+              console.error("[Carrusel] Fallo al subir:", err);
+              showToast(err.message);
+              slideBtn.disabled = false;
+              slideBtn.textContent = "Subir al carrusel";
+            }
+            return;
+          }
 
-    const uploadGalleryBtn = document.getElementById("uploadGalleryBtn");
-    if (uploadGalleryBtn && galleryQueue) {
-      const freshGalBtn = uploadGalleryBtn.cloneNode(true);
-      uploadGalleryBtn.parentNode.replaceChild(freshGalBtn, uploadGalleryBtn);
+          const galBtn = e.target.closest("#uploadGalleryBtn");
+          if (galBtn) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const inp = document.getElementById("czGalleryFiles");
+            const files = inp && inp._fsQueue ? inp._fsQueue.getFiles() : [];
+            if (!files.length) {
+              showToast("Selecciona una imagen o video antes de publicar.");
+              return;
+            }
 
-      freshGalBtn.addEventListener("click", async () => {
-        const files = galleryQueue.getFiles();
-        if (!files.length) return;
-        const fd = new FormData();
-        const catSel = document.getElementById("czGalleryCat");
-        const titleIn = document.getElementById("czGalleryTitle");
-        fd.append("category", catSel ? catSel.value : "fachadas");
-        fd.append("title", titleIn ? titleIn.value.trim() : "");
-        files.forEach((f) => fd.append("images", f));
+            const fd = new FormData();
+            const catSel = document.getElementById("czGalleryCat");
+            const titleIn = document.getElementById("czGalleryTitle");
+            fd.append("category", catSel ? catSel.value : "fachadas");
+            fd.append("title", titleIn ? titleIn.value.trim() : "");
+            files.forEach((f) => fd.append("images", f));
 
-        freshGalBtn.disabled = true;
-        freshGalBtn.textContent = `Publicando ${files.length} archivo(s)...`;
+            galBtn.disabled = true;
+            galBtn.textContent = `Publicando ${files.length} archivo(s)...`;
 
-        try {
-          const res = await fetch(drawer.dataset.urlGalleryAdd, {
-            method: "POST",
-            headers: { "X-CSRFToken": csrfToken() },
-            body: fd,
-          });
-          const data = await res.json();
-          if (!data.ok) throw new Error(data.error || "Error al publicar");
-          window.location.href = `${window.location.pathname}?cz_tab=gallery`;
-        } catch (err) {
-          showToast(err.message);
-          freshGalBtn.disabled = false;
-          freshGalBtn.textContent = "Publicar en portafolio";
-        }
-      });
+            try {
+              const res = await fetch(drawer.dataset.urlGalleryAdd, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "X-CSRFToken": csrfToken() },
+                body: fd,
+              });
+              const raw = await res.text();
+              let data;
+              try {
+                data = JSON.parse(raw);
+              } catch (_) {
+                throw new Error(`Error HTTP ${res.status} al publicar proyecto.`);
+              }
+              if (!res.ok || !data.ok) {
+                throw new Error(data.error || `Error HTTP ${res.status}`);
+              }
+              window.location.href = `${window.location.pathname}?cz_tab=gallery`;
+            } catch (err) {
+              console.error("[Portafolio] Fallo al subir:", err);
+              showToast(err.message);
+              galBtn.disabled = false;
+              galBtn.textContent = "Publicar en portafolio";
+            }
+          }
+        },
+        true
+      );
     }
 
     const galSearch = document.getElementById("czGallerySearch");
@@ -681,7 +797,7 @@
     const accentPicker = document.getElementById("czAccentColor");
     const accentHex = document.getElementById("czAccentHex");
     const resetAccent = document.getElementById("czResetAccent");
-    let customAccentActive = Boolean(main.style.getPropertyValue("--custom-accent"));
+    let customAccentActive = Boolean(main.style.getPropertyValue("--custom-accent") || main.dataset.accentColor);
 
     if (accentPicker) {
       accentPicker.addEventListener("input", () => {
@@ -777,6 +893,7 @@
       try {
         const res = await fetch(drawer.dataset.urlSettingsSave, {
           method: "POST",
+          credentials: "same-origin",
           headers: {
             "Content-Type": "application/json",
             "X-CSRFToken": csrfToken(),
@@ -797,6 +914,18 @@
       }
     }
 
+    const transitionSel = document.getElementById("czTransition");
+    if (transitionSel) {
+      transitionSel.addEventListener("change", () => {
+        const hero = document.getElementById("inicio");
+        const track = document.getElementById("studioHeroCarousel");
+        if (hero) hero.dataset.transition = transitionSel.value;
+        if (track && typeof track._previewNext === "function") {
+          track._previewNext();
+        }
+      });
+    }
+
     const saveCarouselBtn = document.getElementById("saveCarouselConfigBtn");
     if (saveCarouselBtn) {
       const cleanCarBtn = saveCarouselBtn.cloneNode(true);
@@ -814,6 +943,10 @@
           hero.dataset.pauseHover = pauseHover ? "1" : "0";
           hero.classList.toggle("is-kenburns", kenburns);
           initStudioHeroCarousel();
+          const track = document.getElementById("studioHeroCarousel");
+          if (track && typeof track._previewNext === "function") {
+            track._previewNext();
+          }
         }
 
         postSettings(
@@ -890,8 +1023,39 @@
     }
   }
 
+  /* =========================================================
+     4. VIDEOS DE SECCIÓN "¿QUÉ QUIERES CONSTRUIR?"
+     ========================================================= */
+  function initChooseVideosObserver() {
+    const videos = document.querySelectorAll(".choose-media video");
+    if (!videos.length || !("IntersectionObserver" in window)) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.play().catch(() => {});
+          } else {
+            entry.target.pause();
+          }
+        });
+      },
+      { threshold: 0.25 }
+    );
+
+    videos.forEach((v) => io.observe(v));
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
+    const mainEl = document.getElementById("siteMain");
+    if (mainEl) {
+      mainEl.style.setProperty("--hero-shade-alpha", `${mainEl.dataset.heroOverlay || "48"}%`);
+      if (mainEl.dataset.accentColor) {
+        mainEl.style.setProperty("--custom-accent", mainEl.dataset.accentColor);
+      }
+    }
     initStudioHeroCarousel();
     initStudioDrawer();
+    initChooseVideosObserver();
   });
 })();

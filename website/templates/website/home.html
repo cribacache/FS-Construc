@@ -8,7 +8,6 @@
 {% block styles %}
 <link rel="stylesheet" href="{% static 'css/site.css' %}">
 <link rel="stylesheet" href="{% static 'css/studio-overrides.css' %}">
-<link rel="stylesheet" href="{% static 'css/videos.css' %}">
 {% endblock %}
 
 {% block extra_head %}
@@ -97,8 +96,16 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
           <select id="czTransition">
             <option value="fade"{% if site_cfg.carousel_transition == "fade" %} selected{% endif %}>Disolvencia cinematográfica</option>
             <option value="slide"{% if site_cfg.carousel_transition == "slide" %} selected{% endif %}>Deslizamiento lateral</option>
+            <option value="push"{% if site_cfg.carousel_transition == "push" %} selected{% endif %}>Empuje panorámico</option>
             <option value="curtain"{% if site_cfg.carousel_transition == "curtain" %} selected{% endif %}>Cortina arquitectónica</option>
+            <option value="vertical-curtain"{% if site_cfg.carousel_transition == "vertical-curtain" %} selected{% endif %}>Telón vertical</option>
+            <option value="split"{% if site_cfg.carousel_transition == "split" %} selected{% endif %}>Apertura central</option>
+            <option value="diagonal"{% if site_cfg.carousel_transition == "diagonal" %} selected{% endif %}>Corte diagonal</option>
             <option value="zoom"{% if site_cfg.carousel_transition == "zoom" %} selected{% endif %}>Zoom profundo</option>
+            <option value="zoom-out"{% if site_cfg.carousel_transition == "zoom-out" %} selected{% endif %}>Alejamiento aéreo</option>
+            <option value="iris"{% if site_cfg.carousel_transition == "iris" %} selected{% endif %}>Apertura circular (Iris)</option>
+            <option value="blinds"{% if site_cfg.carousel_transition == "blinds" %} selected{% endif %}>Persiana arquitectónica</option>
+            <option value="blur-fade"{% if site_cfg.carousel_transition == "blur-fade" %} selected{% endif %}>Enfoque de lente</option>
           </select>
         </label>
         <label class="cz-field">
@@ -298,7 +305,6 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
         </div>
       </div>
 
-
       <div class="cz-card">
         <h3 class="cz-card-title">Tipografía y geometría</h3>
         <label class="cz-field">
@@ -468,7 +474,8 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
   data-header-style="{{ site_extra.header_style|default:'auto' }}"
   data-gallery-cols="{{ site_extra.gallery_cols|default:'3' }}"
   data-gallery-tone="{{ site_extra.gallery_tone|default:'bw' }}"
-  style="--hero-shade-alpha: {{ site_cfg.hero_overlay|default:48 }}%;{% if site_cfg.accent_color %} --custom-accent: {{ site_cfg.accent_color }};{% endif %}">
+  data-hero-overlay="{{ site_cfg.hero_overlay|default:48 }}"
+  data-accent-color="{{ site_cfg.accent_color|default:'' }}">
 
   <!-- PORTADA CON CARRUSEL AISLADO DE HOME.JS -->
   <section id="inicio" class="hero{% if site_cfg.carousel_kenburns %} is-kenburns{% endif %}"
@@ -563,6 +570,8 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
                   <div class="imgrev choose-media"{% if edit_mode %} data-slot="build_project" data-photo-id="{{ slot_ids.build_project }}"{% endif %}>
                     {% if build_project_url and build_project_is_video %}
                     <video src="{{ build_project_url }}" autoplay muted loop playsinline></video>
+                    {% elif site_videos.0 %}
+                    <video src="{{ site_videos.0.src }}"{% if site_videos.0.poster %} poster="{{ site_videos.0.poster }}"{% endif %} autoplay muted loop playsinline preload="metadata"></video>
                     {% else %}
                     <img src="{% if build_project_url %}{{ build_project_url }}{% else %}{% static fallback_static.build_project %}{% endif %}" alt="" loading="lazy">
                     {% endif %}
@@ -584,6 +593,8 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
                   <div class="imgrev choose-media"{% if edit_mode %} data-slot="build_remodel" data-photo-id="{{ slot_ids.build_remodel }}"{% endif %}>
                     {% if build_remodel_url and build_remodel_is_video %}
                     <video src="{{ build_remodel_url }}" autoplay muted loop playsinline></video>
+                    {% elif site_videos.1 %}
+                    <video src="{{ site_videos.1.src }}"{% if site_videos.1.poster %} poster="{{ site_videos.1.poster }}"{% endif %} autoplay muted loop playsinline preload="metadata"></video>
                     {% else %}
                     <img src="{% if build_remodel_url %}{{ build_remodel_url }}{% else %}{% static fallback_static.build_remodel %}{% endif %}" alt="" loading="lazy">
                     {% endif %}
@@ -605,6 +616,8 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
                   <div class="imgrev choose-media"{% if edit_mode %} data-slot="build_quote" data-photo-id="{{ slot_ids.build_quote }}"{% endif %}>
                     {% if build_quote_url and build_quote_is_video %}
                     <video src="{{ build_quote_url }}" autoplay muted loop playsinline></video>
+                    {% elif site_videos.2 %}
+                    <video src="{{ site_videos.2.src }}"{% if site_videos.2.poster %} poster="{{ site_videos.2.poster }}"{% endif %} autoplay muted loop playsinline preload="metadata"></video>
                     {% else %}
                     <img src="{% if build_quote_url %}{{ build_quote_url }}{% else %}{% static fallback_static.build_quote %}{% endif %}" alt="" loading="lazy">
                     {% endif %}
@@ -796,24 +809,6 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
     {% endfor %}
   </div>
 
-  <!-- VIDEOS -->
-  <section id="videos" class="section videos">
-    <div class="wrap">
-      <div class="sec-head">
-        <p class="eyebrow sec-eyebrow" data-reveal>{% et "videos" "eyebrow" %}En terreno{% endet %}</p>
-        <h2 class="display sec-title" data-lines>{% et "videos" "title" %}Así trabajamos{% endet %}</h2>
-        <p class="sec-lead" data-reveal>{% et "videos" "lead" %}Mira nuestras obras en movimiento.{% endet %}</p>
-      </div>
-      <div class="videos-grid">
-        {% for v in site_videos %}
-        <div class="video-card">
-          <video src="{{ v.src }}" poster="{{ v.poster }}" muted loop controls playsinline preload="metadata"></video>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-
   <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Visor de proyectos">
     <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Cerrar">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -961,7 +956,6 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
 </footer>
 
 <script src="{% static 'js/home.js' %}"></script>
-<script src="{% static 'js/videos.js' %}"></script>
 {% if edit_mode %}<script src="{% static 'js/editor.js' %}"></script>{% endif %}
 <script src="{% static 'js/studio-overrides.js' %}"></script>
 {% if edit_mode %}<script src="{% static 'js/editor-plus.js' %}"></script>{% endif %}

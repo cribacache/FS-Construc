@@ -774,8 +774,9 @@ def editor_settings_save(request):
         return _json_error("Datos inválidos.")
 
     cfg = SiteSettings.get_solo()
+    valid_transitions = {choice[0] for choice in SiteSettings.TRANSITION_CHOICES}
 
-    if payload.get("carousel_transition") in VALID_TRANSITIONS:
+    if payload.get("carousel_transition") in valid_transitions:
         cfg.carousel_transition = payload["carousel_transition"]
 
     if "carousel_interval" in payload:

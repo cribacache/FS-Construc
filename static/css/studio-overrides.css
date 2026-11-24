@@ -725,4 +725,475 @@ html.is-embed-preview .grain::after {
     width: 20px !important;
     height: 20px !important;
   }
+
+  /* ---------- 9. VIDEOS EN TARJETAS "¿QUÉ QUIERES CONSTRUIR?" ---------- */
+.choose-media,
+.choose-frame {
+  position: relative;
+  overflow: hidden;
+}
+
+.choose-media video,
+.imgrev video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1 !important;
+  visibility: visible !important;
+  clip-path: none !important;
+  transform: none !important;
+}
+
+/* ---------- 10. ICONO OFICIAL DE WHATSAPP ---------- */
+.floating-wa svg[data-icon="whatsapp"],
+.social-btn svg[data-icon="whatsapp"] {
+  fill: currentColor !important;
+  stroke: none !important;
+}
+
+/* ---------- 11. 12 TRANSICIONES DEL CARRUSEL DE PORTADA ---------- */
+.studio-hero-media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.studio-hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform, opacity, clip-path, filter;
+}
+
+.studio-hero-slide.is-prev {
+  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+}
+
+.studio-hero-slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 2;
+}
+
+.studio-hero-img,
+.studio-hero-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+}
+
+.hero.is-kenburns .studio-hero-slide.is-active .studio-hero-img,
+.hero.is-kenburns .studio-hero-slide.is-active .studio-hero-video {
+  animation: studioKenBurns 14s ease-out forwards;
+}
+
+@keyframes studioKenBurns {
+  from { transform: scale(1.09); }
+  to { transform: scale(1); }
+}
+
+/* 01. Disolvencia cinematográfica */
+.hero[data-transition="fade"] .studio-hero-slide.is-entering {
+  animation: trFadeIn 0.85s var(--ease-out) both;
+}
+@keyframes trFadeIn {
+  from { opacity: 0; transform: scale(1.04); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 02. Deslizamiento lateral */
+.hero[data-transition="slide"] .studio-hero-slide.is-entering.is-dir-next {
+  animation: trSlideNext 0.85s var(--ease-io) both;
+}
+.hero[data-transition="slide"] .studio-hero-slide.is-entering.is-dir-prev {
+  animation: trSlidePrev 0.85s var(--ease-io) both;
+}
+.hero[data-transition="slide"] .studio-hero-slide.is-prev.is-dir-next {
+  animation: trSlideOutNext 0.85s var(--ease-io) both;
+}
+.hero[data-transition="slide"] .studio-hero-slide.is-prev.is-dir-prev {
+  animation: trSlideOutPrev 0.85s var(--ease-io) both;
+}
+@keyframes trSlideNext {
+  from { transform: translate3d(100%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes trSlidePrev {
+  from { transform: translate3d(-100%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes trSlideOutNext {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-26%, 0, 0); }
+}
+@keyframes trSlideOutPrev {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(26%, 0, 0); }
+}
+
+/* 03. Empuje panorámico */
+.hero[data-transition="push"] .studio-hero-slide.is-entering.is-dir-next {
+  animation: trSlideNext 0.85s var(--ease-io) both;
+}
+.hero[data-transition="push"] .studio-hero-slide.is-entering.is-dir-prev {
+  animation: trSlidePrev 0.85s var(--ease-io) both;
+}
+.hero[data-transition="push"] .studio-hero-slide.is-prev.is-dir-next {
+  animation: trPushOutNext 0.85s var(--ease-io) both;
+}
+.hero[data-transition="push"] .studio-hero-slide.is-prev.is-dir-prev {
+  animation: trPushOutPrev 0.85s var(--ease-io) both;
+}
+@keyframes trPushOutNext {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-100%, 0, 0); }
+}
+@keyframes trPushOutPrev {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(100%, 0, 0); }
+}
+
+/* 04. Cortina arquitectónica */
+.hero[data-transition="curtain"] .studio-hero-slide.is-entering.is-dir-next {
+  animation: trCurtainNext 0.85s var(--ease-io) both;
+}
+.hero[data-transition="curtain"] .studio-hero-slide.is-entering.is-dir-prev {
+  animation: trCurtainPrev 0.85s var(--ease-io) both;
+}
+@keyframes trCurtainNext {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes trCurtainPrev {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* 05. Telón vertical */
+.hero[data-transition="vertical-curtain"] .studio-hero-slide.is-entering.is-dir-next {
+  animation: trVertCurtainNext 0.85s var(--ease-io) both;
+}
+.hero[data-transition="vertical-curtain"] .studio-hero-slide.is-entering.is-dir-prev {
+  animation: trVertCurtainPrev 0.85s var(--ease-io) both;
+}
+@keyframes trVertCurtainNext {
+  from { clip-path: inset(100% 0 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes trVertCurtainPrev {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* 06. Apertura central */
+.hero[data-transition="split"] .studio-hero-slide.is-entering {
+  animation: trSplitOpen 0.85s var(--ease-io) both;
+}
+@keyframes trSplitOpen {
+  from { clip-path: inset(0 50% 0 50%); transform: scale(1.05); }
+  to { clip-path: inset(0 0 0 0); transform: scale(1); }
+}
+
+/* 07. Corte diagonal */
+.hero[data-transition="diagonal"] .studio-hero-slide.is-entering.is-dir-next {
+  animation: trDiagonalNext 0.85s var(--ease-io) both;
+}
+.hero[data-transition="diagonal"] .studio-hero-slide.is-entering.is-dir-prev {
+  animation: trDiagonalPrev 0.85s var(--ease-io) both;
+}
+@keyframes trDiagonalNext {
+  from { clip-path: polygon(100% 0%, 135% 0%, 135% 100%, 135% 100%); }
+  to { clip-path: polygon(-35% 0%, 100% 0%, 100% 100%, 0% 100%); }
+}
+@keyframes trDiagonalPrev {
+  from { clip-path: polygon(-35% 0%, 0% 0%, -35% 100%, -35% 100%); }
+  to { clip-path: polygon(0% 0%, 135% 0%, 100% 100%, -35% 100%); }
+}
+
+/* 08. Zoom profundo */
+.hero[data-transition="zoom"] .studio-hero-slide.is-entering {
+  animation: trZoomIn 0.85s var(--ease-out) both;
+}
+@keyframes trZoomIn {
+  from { opacity: 0; transform: scale(1.18); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 09. Alejamiento aéreo */
+.hero[data-transition="zoom-out"] .studio-hero-slide.is-prev {
+  z-index: 3;
+  animation: trZoomOutLeave 0.85s var(--ease-io) both;
+}
+.hero[data-transition="zoom-out"] .studio-hero-slide.is-entering {
+  z-index: 2;
+  animation: trZoomOutEnter 0.85s var(--ease-io) both;
+}
+@keyframes trZoomOutLeave {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.15); }
+}
+@keyframes trZoomOutEnter {
+  from { transform: scale(0.94); }
+  to { transform: scale(1); }
+}
+
+/* 10. Apertura circular (Iris) */
+.hero[data-transition="iris"] .studio-hero-slide.is-entering {
+  animation: trIrisOpen 0.88s var(--ease-io) both;
+}
+@keyframes trIrisOpen {
+  from { clip-path: circle(0% at 50% 50%); transform: scale(1.06); }
+  to { clip-path: circle(100% at 50% 50%); transform: scale(1); }
+}
+
+/* ---------- 11. 12 TRANSICIONES DISTINTAS DEL CARRUSEL (60FPS) ---------- */
+#inicio.hero .studio-hero-media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--ink, #0b1320);
+}
+
+#inicio.hero .studio-hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 0;
+  transition: none !important;
+  will-change: transform, opacity, clip-path, filter;
+}
+
+#inicio.hero .studio-hero-slide.is-prev {
+  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+  transition: none !important;
+}
+
+#inicio.hero .studio-hero-slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 2;
+  transition: none !important;
+}
+
+#inicio.hero .studio-hero-img,
+#inicio.hero .studio-hero-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+}
+
+#inicio.hero.is-kenburns .studio-hero-slide.is-active .studio-hero-img,
+#inicio.hero.is-kenburns .studio-hero-slide.is-active .studio-hero-video {
+  animation: studioKenBurns 14s ease-out forwards;
+}
+
+#inicio.hero.is-kenburns .studio-hero-slide.is-prev .studio-hero-img,
+#inicio.hero.is-kenburns .studio-hero-slide.is-prev .studio-hero-video {
+  animation-play-state: paused;
+}
+
+@keyframes studioKenBurns {
+  from { transform: scale(1.09); }
+  to { transform: scale(1); }
+}
+
+/* 01. Disolvencia cinematográfica */
+#inicio.hero[data-transition="fade"] .studio-hero-slide.is-entering {
+  animation: trFadeIn 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes trFadeIn {
+  from { opacity: 0; transform: scale(1.05); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 02. Deslizamiento lateral (entra encima mientras la anterior retrocede y se oscurece) */
+#inicio.hero[data-transition="slide"] .studio-hero-slide.is-entering.is-dir-next {
+  z-index: 3;
+  animation: trSlideNext 0.8s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+#inicio.hero[data-transition="slide"] .studio-hero-slide.is-entering.is-dir-prev {
+  z-index: 3;
+  animation: trSlidePrev 0.8s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+#inicio.hero[data-transition="slide"] .studio-hero-slide.is-prev {
+  z-index: 1;
+  animation: trSlideDepthOut 0.8s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes trSlideNext {
+  from { transform: translate3d(100%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes trSlidePrev {
+  from { transform: translate3d(-100%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@keyframes trSlideDepthOut {
+  from { transform: scale(1); filter: brightness(1); }
+  to { transform: scale(0.9); filter: brightness(0.45); }
+}
+
+/* 03. Empuje panorámico (cinta continua 1:1 sin superposición) */
+#inicio.hero[data-transition="push"] .studio-hero-slide.is-entering.is-dir-next {
+  animation: trSlideNext 0.8s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+#inicio.hero[data-transition="push"] .studio-hero-slide.is-entering.is-dir-prev {
+  animation: trSlidePrev 0.8s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+#inicio.hero[data-transition="push"] .studio-hero-slide.is-prev.is-dir-next {
+  animation: trPushOutNext 0.8s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+#inicio.hero[data-transition="push"] .studio-hero-slide.is-prev.is-dir-prev {
+  animation: trPushOutPrev 0.8s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes trPushOutNext {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-100%, 0, 0); }
+}
+@keyframes trPushOutPrev {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(100%, 0, 0); }
+}
+
+/* 04. Cortina arquitectónica (barrido horizontal puro) */
+#inicio.hero[data-transition="curtain"] .studio-hero-slide.is-entering.is-dir-next {
+  animation: trCurtainNext 0.85s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+#inicio.hero[data-transition="curtain"] .studio-hero-slide.is-entering.is-dir-prev {
+  animation: trCurtainPrev 0.85s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes trCurtainNext {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes trCurtainPrev {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* 05. Telón vertical (barrido vertical puro) */
+#inicio.hero[data-transition="vertical-curtain"] .studio-hero-slide.is-entering.is-dir-next {
+  animation: trVertCurtainNext 0.85s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+#inicio.hero[data-transition="vertical-curtain"] .studio-hero-slide.is-entering.is-dir-prev {
+  animation: trVertCurtainPrev 0.85s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes trVertCurtainNext {
+  from { clip-path: inset(100% 0 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes trVertCurtainPrev {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* 06. Apertura central (se abre desde el centro hacia los lados) */
+#inicio.hero[data-transition="split"] .studio-hero-slide.is-entering {
+  animation: trSplitOpen 0.85s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes trSplitOpen {
+  from { clip-path: inset(0 50% 0 50%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* 07. Corte diagonal */
+#inicio.hero[data-transition="diagonal"] .studio-hero-slide.is-entering.is-dir-next {
+  animation: trDiagonalNext 0.85s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+#inicio.hero[data-transition="diagonal"] .studio-hero-slide.is-entering.is-dir-prev {
+  animation: trDiagonalPrev 0.85s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes trDiagonalNext {
+  from { clip-path: polygon(100% 0%, 140% 0%, 140% 100%, 140% 100%); }
+  to { clip-path: polygon(-40% 0%, 100% 0%, 100% 100%, 0% 100%); }
+}
+@keyframes trDiagonalPrev {
+  from { clip-path: polygon(-40% 0%, 0% 0%, -40% 100%, -40% 100%); }
+  to { clip-path: polygon(0% 0%, 140% 0%, 100% 100%, -40% 100%); }
+}
+
+/* 08. Zoom profundo (la actual avanza hacia cámara y la nueva emerge del fondo) */
+#inicio.hero[data-transition="zoom"] .studio-hero-slide.is-prev {
+  z-index: 3;
+  animation: trZoomForwardOut 0.85s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+#inicio.hero[data-transition="zoom"] .studio-hero-slide.is-entering {
+  z-index: 2;
+  animation: trZoomForwardIn 0.85s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes trZoomForwardOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.26); }
+}
+@keyframes trZoomForwardIn {
+  from { transform: scale(0.86); }
+  to { transform: scale(1); }
+}
+
+/* 09. Alejamiento aéreo (efecto drone desde primer plano hacia plano abierto) */
+#inicio.hero[data-transition="zoom-out"] .studio-hero-slide.is-entering {
+  z-index: 3;
+  animation: trDronePullBack 0.88s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes trDronePullBack {
+  from { opacity: 0; transform: scale(1.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 10. Apertura circular (Iris) */
+#inicio.hero[data-transition="iris"] .studio-hero-slide.is-entering {
+  animation: trIrisOpen 0.88s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes trIrisOpen {
+  from { clip-path: circle(0% at 50% 50%); }
+  to { clip-path: circle(150% at 50% 50%); }
+}
+
+/* 11. Persiana arquitectónica (5 lamas verticales) */
+#inicio.hero[data-transition="blinds"] .studio-hero-slide.is-entering {
+  animation: trBlindsOpen 0.85s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes trBlindsOpen {
+  from {
+    clip-path: polygon(
+      0% 0%, 0% 0%, 0% 100%, 0% 100%,
+      20% 0%, 20% 0%, 20% 100%, 20% 100%,
+      40% 0%, 40% 0%, 40% 100%, 40% 100%,
+      60% 0%, 60% 0%, 60% 100%, 60% 100%,
+      80% 0%, 80% 0%, 80% 100%, 80% 100%
+    );
+  }
+  to {
+    clip-path: polygon(
+      0% 0%, 20.5% 0%, 20.5% 100%, 0% 100%,
+      20% 0%, 40.5% 0%, 40.5% 100%, 20% 100%,
+      40% 0%, 60.5% 0%, 60.5% 100%, 40% 100%,
+      60% 0%, 80.5% 0%, 80.5% 100%, 60% 100%,
+      80% 0%, 100% 0%, 100% 100%, 80% 100%
+    );
+  }
+}
+
+/* 12. Enfoque de lente (Rack Focus) */
+#inicio.hero[data-transition="blur-fade"] .studio-hero-slide.is-entering {
+  animation: trBlurFadeIn 0.88s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes trBlurFadeIn {
+  from { opacity: 0; filter: blur(24px) brightness(1.25); transform: scale(1.08); }
+  to { opacity: 1; filter: blur(0px) brightness(1); transform: scale(1); }
+}
 }

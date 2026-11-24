@@ -69,9 +69,14 @@ MIDDLEWARE = [
 # Cloud Run terminates TLS at the load balancer and forwards plain HTTP,
 # signaling the original scheme via this header.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-CSRF_TRUSTED_ORIGINS = [
+_env_csrf = [
     o.strip() for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()
 ]
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(_env_csrf + [
+    'https://fsconstrucciones.cl',
+    'https://www.fsconstrucciones.cl',
+    'https://fs-construcciones-429132431262.southamerica-west1.run.app',
+]))
 
 # HTTPS / cookie hardening. Gated on DEBUG so local `runserver` (plain HTTP)
 # still works without extra setup.
