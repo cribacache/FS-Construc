@@ -807,7 +807,7 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
       <div class="videos-grid">
         {% for v in site_videos %}
         <div class="video-card">
-          <video src="{{ v.src }}" poster="{{ v.poster }}" controls playsinline preload="none"></video>
+          <video src="{{ v.src }}" poster="{{ v.poster }}" muted loop controls playsinline preload="metadata"></video>
         </div>
         {% endfor %}
       </div>
@@ -961,6 +961,7 @@ if (window.self !== window.top || window.location.search.indexOf("_preview=") !=
 </footer>
 
 <script src="{% static 'js/home.js' %}"></script>
+<script src="{% static 'js/videos.js' %}"></script>
 {% if edit_mode %}<script src="{% static 'js/editor.js' %}"></script>{% endif %}
 <script src="{% static 'js/studio-overrides.js' %}"></script>
 {% if edit_mode %}<script src="{% static 'js/editor-plus.js' %}"></script>{% endif %}
